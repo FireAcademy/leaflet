@@ -103,6 +103,7 @@ dist
 # TernJS port file
 .tern-port
 
+# Client certs, even though they are re-writen every time the app starts
 client_ssl/client.crt
-client_ssl/client.key
 client_ssl/client.csr
+client_ssl/client.key
