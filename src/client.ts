@@ -1,7 +1,6 @@
 import { WebSocket } from 'ws';
 import { ALLOWED_MESSAGE_TYPES, ALLOWED_NODE_TYPE } from './allowed_message_types';
 import { CertAndKey } from './cert_manager';
-import { recordUsage } from './config';
 import { ProtocolMessageTypes } from './protocol_message_types';
 import { v4 as uuidv4 } from 'uuid';
 /*
@@ -14,6 +13,7 @@ export class Client {
   private readonly nodeWs: WebSocket; // this process <-> full node 8444
   private readonly apiKey: string;
   private readonly onClose: (id: string) => void;
+  private readonly recordUsage: (apiKey: string, bytes: number) => Promise<boolean>;
   public id: string;
 
   constructor(
@@ -21,24 +21,25 @@ export class Client {
     certAndKey: CertAndKey,
     apiKey: string,
     onClose: (id: string) => void,
+    recordUsage: (apiKey: string, bytes: number) => Promise<boolean>,
   ) {
     this.clientWs = ws;
     this.apiKey = apiKey;
     this.onClose = onClose;
     this.id = uuidv4();
+    this.recordUsage = recordUsage;
 
     // setup ASAP
     this.clientWs.on('message', async (msg: Buffer) => {
-      console.log(msg); // ---------------------------------------------------------------------------------------
-      recordUsage(this.apiKey, msg.length);
+      if (!(await this.recordUsage(this.apiKey, msg.length))) {
+        this.clientWs.close();
+      }
 
       const msgType = msg.readUInt8();
       if (!ALLOWED_MESSAGE_TYPES.includes(msgType)) {
-        console.log("close <- msgType"); // ---------------------------------------------------------------------------------------
         this.clientWs.close();
       }
       if (msgType === ProtocolMessageTypes.handshake && !this.handshakeOk(msg)) {
-        console.log("close <- handshake not ok"); // ---------------------------------------------------------------------------------------
         this.clientWs.close();
       }
 
@@ -61,22 +62,22 @@ export class Client {
     const id = this.id;
 
     this.clientWs.on('close', () => {
-      console.log("Close clientWs");
       if (this.nodeWs.readyState === WebSocket.OPEN) {
         this.nodeWs.close();
       }
       this.onClose(id);
     });
     this.nodeWs.on('close', () => {
-      console.log("Close nodeWs");
       if (this.clientWs.readyState === WebSocket.OPEN) {
         this.clientWs.close();
       }
     });
 
-    this.nodeWs.on('message', (msg) => {
-      recordUsage(this.apiKey, msg.toString('hex').length / 2);
-      console.log("Message from node: " + msg.toString("hex"));
+    this.nodeWs.on('message', async (msg) => {
+      if (!(await this.recordUsage(this.apiKey, msg.toString('hex').length / 2))) {
+        this.clientWs.close();
+        return;
+      }
       this.clientWs.send(msg);
     });
   }
