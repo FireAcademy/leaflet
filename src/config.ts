@@ -10,3 +10,11 @@ export async function isAPIKeyAllowed(apiKey: string): Promise<boolean> {
 export async function recordUsage(apiKey: string, bytes: number) {
   console.log(`Key ${apiKey}; add usage: ${bytes}`);
 }
+
+export async function onClientsChanged() {
+
+}
+
+export async function canReceiveClient() {
+  
+}

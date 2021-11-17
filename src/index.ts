@@ -29,13 +29,18 @@ app.get('/', (req, res) => {
 app.ws('/:apiKey/ws', (ws, req) => {
   const apiKey: string = req.params.apiKey;
 
-  const client = new Client(
-    ws,
-    certManager.getCertAndKey(),
-    apiKey,
-    id => clients = clients.filter(e => e.id !== id),
-   );
-  clients.push(client);
+  try {
+    const client = new Client(
+      ws,
+      certManager.getCertAndKey(),
+      apiKey,
+      id => clients = clients.filter(e => e.id !== id),
+     );
+    clients.push(client);
+  } catch (_) {
+    console.log(_);
+    ws.close();
+  }
 });
 
 console.log('Generating certificate queue; this might take a few mins...');
