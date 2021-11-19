@@ -24,8 +24,14 @@ controller.initialize().then((ok) => {
     res.send('Leaflet server is running!').end();
   });
 
-  app.get('/', async (req, res) => {
-    res.send('Leaflet server is running!').end();
+  app.get('/health', async (req, res) => {
+    const isHealthy = controller.canReceiveClient();
+
+    if (isHealthy) {
+      res.send('OK').end();
+    } else {
+      res.status(400).send('MAX CONNECTIONS REACHED').end();
+    }
   });
 
   app.ws('/:apiKey/ws', (ws, req) => {
@@ -36,7 +42,11 @@ controller.initialize().then((ok) => {
         ws,
         certManager.getCertAndKey(),
         apiKey,
-        id => clients = clients.filter(e => e.id !== id),
+        async (id) => {
+          clients = clients.filter(e => e.id !== id);
+          controller.updateConnections(clients.length);
+          await controller.recordUsage(apiKey, 0, true);
+        },
         (apiKey, bytes) => controller.recordUsage(apiKey, bytes),
        );
       clients.push(client);

@@ -32,6 +32,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "express-ws": "^5.0.2",
+    "firebase-admin": "^10.0.0",
+    "sha3": "^2.1.4",
     "tslint-config-airbnb": "^5.11.2",
     "uuid": "^8.3.2",
     "ws": "^8.2.3"
