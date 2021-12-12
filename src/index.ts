@@ -13,6 +13,7 @@ controller.initialize().then((ok) => {
   const certManager = new CertManager(controller.maxWalletClients! * 2);
   let clients: Client[] = [];
   const expressApp = express();
+  const healthApp = express();
 
   const httpsServer = https.createServer(
     { key: readFileSync('ssl/server.key'), cert: readFileSync('ssl/server.crt') },
@@ -24,7 +25,7 @@ controller.initialize().then((ok) => {
     res.send('Leaflet server is running!').end();
   });
 
-  app.get('/health', async (req, res) => {
+  healthApp.get('/health', async (req, res) => {
     const isHealthy = controller.canReceiveClient();
 
     if (isHealthy) {
@@ -57,7 +58,13 @@ controller.initialize().then((ok) => {
   });
 
   console.log('Generating certificate queue; this might take a few mins...');
-  certManager.initialize().then(() => httpsServer.listen(18444, () => {
-    console.log('Done. Listening on port 18444...');
-  }));
+  certManager.initialize().then(() => {
+    httpsServer.listen(18444, () => {
+      console.log('Done. Socket thing listening on port 18444...');
+    });
+
+    healthApp.listen(4242, () => {
+      console.log('Done. Health thing listening on port 4242...');
+    });
+  });
 });
