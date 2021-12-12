@@ -5,6 +5,7 @@ import { readFileSync } from 'fs';
 import { CertManager } from './cert_manager';
 import { Client } from './client';
 import { Controller } from './controller';
+import { env } from 'process';
 
 const controller = new Controller();
 controller.initialize().then((ok) => {
@@ -59,12 +60,16 @@ controller.initialize().then((ok) => {
 
   console.log('Generating certificate queue; this might take a few mins...');
   certManager.initialize().then(() => {
+    console.log('Done.');
+
     httpsServer.listen(18444, () => {
-      console.log('Done. Socket thing listening on port 18444...');
+      console.log('Socket thing listening on port 18444...');
     });
 
-    healthApp.listen(4242, () => {
-      console.log('Done. Health thing listening on port 4242...');
-    });
+    if (env.REPORT_HEALTH) {
+      healthApp.listen(4242, () => {
+        console.log('Health thing listening on port 4242...');
+      });
+    }
   });
 });
