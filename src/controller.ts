@@ -2,8 +2,11 @@ import { firestore } from 'firebase-admin';
 import { App, initializeApp, cert } from 'firebase-admin/app';
 import { DocumentReference, DocumentSnapshot, Firestore, getFirestore } from 'firebase-admin/firestore';
 import { env } from 'process';
+import { FullNode } from 'chia-client';
+import { homedir } from 'os';
+import * as path from 'path';
 
-const LOG_TRESHOLD = 1000000; // bytes cached until updating db
+const LOG_TRESHOLD = 1000000; // bytes 'cached' until usae is written to db
 
 export class Controller {
   public maxWalletClients: number | undefined;
@@ -11,6 +14,14 @@ export class Controller {
   private connectionCount = 0;
   private firebaseApp: App | undefined;
   private db: Firestore | undefined;
+  private readonly fullNode = new FullNode({
+    protocol: 'https',
+    hostname: 'localhost',
+    port: 8555,
+    certPath: path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.crt'),
+    keyPath: path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.key'),
+    caCertPath: path.join(homedir(), '.chia/mainnet/config/ssl/ca/private_ca.crt'),
+  });
 
   public async initialize(): Promise<boolean> {
     this.maxWalletClients = 20;
@@ -71,7 +82,15 @@ export class Controller {
     this.connectionCount = connectionCount;
   }
 
-  public canReceiveClient(): boolean {
-    return this.connectionCount < this.maxWalletClients!;
+  public async canReceiveClient(): Promise<boolean> {
+    return this.connectionCount < this.maxWalletClients! && this.isReady();
+  }
+
+  public async isReady(): Promise<boolean> {
+    const blockchain = await this.fullNode.getBlockchainState();
+
+    return blockchain.success &&
+      blockchain.blockchain_state.sync.synced &&
+      !blockchain.blockchain_state.sync.sync_mode;
   }
 }

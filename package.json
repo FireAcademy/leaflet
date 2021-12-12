@@ -30,6 +30,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "chia-client": "^10.0.3",
     "express": "^4.17.1",
     "express-ws": "^5.0.2",
     "firebase-admin": "^10.0.0",
