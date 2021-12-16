@@ -1,7 +1,5 @@
 import express from 'express';
 import expressWs from 'express-ws';
-import https from 'https';
-import { readFileSync } from 'fs';
 import { CertManager } from './cert_manager';
 import { Client } from './client';
 import { Controller } from './controller';
@@ -16,11 +14,7 @@ controller.initialize().then((ok) => {
   const expressApp = express();
   const healthApp = express();
 
-  const httpsServer = https.createServer(
-    { key: readFileSync('ssl/server.key'), cert: readFileSync('ssl/server.crt') },
-    expressApp,
-  );
-  const app = expressWs(expressApp, httpsServer).app;
+  const app = expressWs(expressApp).app;
 
   app.get('/', (req, res) => {
     res.send('Leaflet server is running!').end();
@@ -72,7 +66,7 @@ controller.initialize().then((ok) => {
   certManager.initialize().then(() => {
     console.log('Done.');
 
-    httpsServer.listen(18444, () => {
+    app.listen(18444, () => {
       console.log('Socket thing listening on port 18444...');
     });
 
