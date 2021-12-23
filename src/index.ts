@@ -20,23 +20,13 @@ controller.initialize().then((ok) => {
     res.send('Leaflet server is running!').end();
   });
 
-  healthApp.get('/health', async (req, res) => {
-    const isHealthy = await controller.canReceiveClient();
-
-    if (isHealthy) {
-      res.send('OK').end();
-    } else {
-      res.status(400).send('CALL TEH DOCTOR').end();
-    }
-  });
-
   healthApp.get('/ready', async (req, res) => {
-    const isReady = await controller.isReady();
+    const isReady = await controller.canReceiveClient();
 
     if (isReady) {
       res.send('OK').end();
     } else {
-      res.status(400).send('NOT YET').end();
+      res.status(400).send('NOT READY BRO').end();
     }
   });
 
