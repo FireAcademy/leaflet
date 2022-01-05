@@ -20,6 +20,7 @@ export class CertManager {
   public async initialize(): Promise<void> {
     await this.ensureQueueHasEnoughItems();
 
+    // tslint:disable-next-line: no-this-assignment
     const self = this;
     setInterval(
       () => this.ensureQueueHasEnoughItems(self),
