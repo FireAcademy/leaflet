@@ -14,6 +14,11 @@ controller.initialize().then((ok) => {
   const expressApp = express();
   const healthApp = express();
 
+  if (env.REPORT_HEALTH) {
+    const apiMetrics = require('prometheus-api-metrics');
+    healthApp.use(apiMetrics());
+  }
+
   const app = expressWs(expressApp).app;
 
   app.get('/', (req, res) => {

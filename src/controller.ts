@@ -3,8 +3,9 @@ import { App, initializeApp, cert } from 'firebase-admin/app';
 import { DocumentReference, DocumentSnapshot, Firestore, getFirestore } from 'firebase-admin/firestore';
 import { env } from 'process';
 import { FullNode } from 'chia-client';
-import { homedir } from 'os';
+import { homedir, hostname } from 'os';
 import * as path from 'path';
+import { Gauge } from 'prom-client';
 
 const LOG_TRESHOLD = 1000000; // bytes 'cached' until usae is written to db
 
@@ -22,6 +23,7 @@ export class Controller {
     keyPath: path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.key'),
     caCertPath: path.join(homedir(), '.chia/mainnet/config/ssl/ca/private_ca.crt'),
   });
+  private gauge: Gauge<'pod'> | undefined;
 
   public async initialize(): Promise<boolean> {
     this.maxWalletClients = 69;
@@ -33,6 +35,16 @@ export class Controller {
       this.db = getFirestore(this.firebaseApp);
     } catch (_) {
       console.log(`Could not initialize Firebase Admin SDK: ${_}`);
+    }
+
+    if (env.REPORT_HEALTH) {
+      this.gauge = new Gauge({
+        name: 'custom_metrics_connected_clients_by_pos',
+        help: 'Custom metric: Connected Clients per Pod',
+        labelNames: ['pod'],
+      });
+
+      this.gauge?.set({ pod: hostname() }, 0);
     }
 
     console.log('Controller initialized');
@@ -80,6 +92,7 @@ export class Controller {
 
   public updateConnections(connectionCount: number) {
     this.connectionCount = connectionCount;
+    this.gauge?.set({ pod: hostname() }, connectionCount);
   }
 
   public async canReceiveClient(): Promise<boolean> {
