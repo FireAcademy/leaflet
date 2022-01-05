@@ -51,6 +51,7 @@ controller.initialize().then((ok) => {
         (apiKey, bytes) => controller.recordUsage(apiKey, bytes),
        );
       clients.push(client);
+      controller.updateConnections(clients.length);
     } catch (_) {
       console.log(_);
       ws.close();
