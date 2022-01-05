@@ -39,7 +39,7 @@ export class Controller {
 
     if (env.REPORT_HEALTH) {
       this.gauge = new Gauge({
-        name: 'custom_metrics_connected_clients_by_pos',
+        name: 'custom_metrics_connected_clients_by_pod',
         help: 'Custom metric: Connected Clients per Pod',
         labelNames: ['pod'],
       });
