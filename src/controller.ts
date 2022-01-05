@@ -24,7 +24,7 @@ export class Controller {
   });
 
   public async initialize(): Promise<boolean> {
-    this.maxWalletClients = 20;
+    this.maxWalletClients = 69;
 
     try {
       this.firebaseApp = initializeApp({
