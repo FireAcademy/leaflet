@@ -10,6 +10,7 @@ export type CertAndKey = {
 export class CertManager {
   private readonly targetQueueLength: number;
   private queue: CertAndKey[];
+  private lock = false;
 
   constructor(targetQueueLength: number) {
     this.targetQueueLength = targetQueueLength;
@@ -37,6 +38,11 @@ export class CertManager {
   private async addCertToQueue(selfMaybe: CertManager | null = null): Promise<void> {
     const self = selfMaybe === null ? this : selfMaybe;
 
+    while (self.lock) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    self.lock = true;
+
     const commands = [
       'openssl genpkey -outform PEM -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:65537 -out client.key',
       'openssl req -new -key client.key -config config.txt -out client.csr',
@@ -58,6 +64,7 @@ export class CertManager {
     };
 
     self.queue.push(certAndKey);
+    self.lock = false;
   }
 
   public getCertAndKey(): CertAndKey {
