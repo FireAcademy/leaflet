@@ -9,7 +9,7 @@ const controller = new Controller();
 controller.initialize().then((ok) => {
   if (!ok) return;
 
-  const certManager = new CertManager(69);
+  const certManager = new CertManager(100);
   let clients: Client[] = [];
   const expressApp = express();
   const metricsApp = express();

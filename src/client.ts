@@ -8,6 +8,9 @@ generate a new cert for each client (simulate a new 'peer')
 get data from clientWs -> decode + verify -> pass it to nodeWs
 receive data from nodeWs -> send it to clientWs
 */
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export class Client {
   private readonly clientWs: WebSocket; // user <-> this machine
   private readonly nodeWs: WebSocket; // this process <-> full node 8444
@@ -37,16 +40,19 @@ export class Client {
 
       const msgType = msg.readUInt8();
       if (!ALLOWED_MESSAGE_TYPES.includes(msgType)) {
+        await sleep(1000);
         this.clientWs.close();
       }
       if (msgType === ProtocolMessageTypes.handshake && !this.handshakeOk(msg)) {
+        await sleep(1000);
         this.clientWs.close();
       }
 
       while (this.nodeWs === undefined || this.nodeWs.readyState === WebSocket.CONNECTING) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await sleep(100);
       }
       this.nodeWs.send(msg);
+      this.checkSocketsReadyState();
     });
 
     this.nodeWs = new WebSocket('wss://localhost:8444/ws', {
@@ -58,19 +64,24 @@ export class Client {
     this.nodeWs.on('open', () => this.setupSocketStuff());
   }
 
+  private checkSocketsReadyState() {
+    if (this.nodeWs.readyState !== WebSocket.OPEN) {
+      this.clientWs.close();
+    }
+    if (this.clientWs.readyState !== WebSocket.OPEN) {
+      this.nodeWs.close();
+    }
+  }
+
   private setupSocketStuff() {
     const id = this.id;
 
     this.clientWs.on('close', () => {
-      if (this.nodeWs.readyState === WebSocket.OPEN) {
-        this.nodeWs.close();
-      }
+      this.checkSocketsReadyState();
       this.onClose(id);
     });
     this.nodeWs.on('close', () => {
-      if (this.clientWs.readyState === WebSocket.OPEN) {
-        this.clientWs.close();
-      }
+      this.checkSocketsReadyState();
     });
 
     this.nodeWs.on('message', async (msg) => {
@@ -79,6 +90,7 @@ export class Client {
         return;
       }
       this.clientWs.send(msg);
+      this.checkSocketsReadyState();
     });
   }
 
