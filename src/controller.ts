@@ -7,12 +7,10 @@ import { homedir, hostname } from 'os';
 import * as path from 'path';
 import { Gauge } from 'prom-client';
 
-const LOG_TRESHOLD = 1000000; // bytes 'cached' until usae is written to db
+const LOG_TRESHOLD = 4200000; // bytes 'cached' until usae is written to db
 
 export class Controller {
-  public maxWalletClients: number | undefined;
   private usageCache: Record<string, number> = {};
-  private connectionCount = 0;
   private firebaseApp: App | undefined;
   private db: Firestore | undefined;
   private readonly fullNode = new FullNode({
@@ -26,8 +24,6 @@ export class Controller {
   private gauge: Gauge<'pod'> | undefined;
 
   public async initialize(): Promise<boolean> {
-    this.maxWalletClients = 69;
-
     try {
       this.firebaseApp = initializeApp({
         credential: cert(JSON.parse(env.FIREBASE_CREDS ?? '{}')),
@@ -37,7 +33,7 @@ export class Controller {
       console.log(`Could not initialize Firebase Admin SDK: ${_}`);
     }
 
-    if (env.REPORT_HEALTH) {
+    if (env.REPORT_METRICS) {
       this.gauge = new Gauge({
         name: 'custom_metrics_connected_clients_by_pod',
         help: 'Custom metric: Connected Clients per Pod',
@@ -91,12 +87,7 @@ export class Controller {
   }
 
   public updateConnections(connectionCount: number) {
-    this.connectionCount = connectionCount;
     this.gauge?.set({ pod: hostname() }, connectionCount);
-  }
-
-  public async canReceiveClient(): Promise<boolean> {
-    return this.connectionCount < this.maxWalletClients! && this.isReady();
   }
 
   public async isReady(): Promise<boolean> {

@@ -9,14 +9,14 @@ const controller = new Controller();
 controller.initialize().then((ok) => {
   if (!ok) return;
 
-  const certManager = new CertManager(controller.maxWalletClients! * 2);
+  const certManager = new CertManager(69);
   let clients: Client[] = [];
   const expressApp = express();
-  const healthApp = express();
+  const metricsApp = express();
 
-  if (env.REPORT_HEALTH) {
+  if (env.REPORT_METRICS) {
     const apiMetrics = require('prometheus-api-metrics');
-    healthApp.use(apiMetrics());
+    metricsApp.use(apiMetrics());
   }
 
   const app = expressWs(expressApp).app;
@@ -25,8 +25,8 @@ controller.initialize().then((ok) => {
     res.send('Leaflet server is running!').end();
   });
 
-  healthApp.get('/ready', async (req, res) => {
-    const isReady = await controller.canReceiveClient();
+  app.get('/ready', async (req, res) => {
+    const isReady = await controller.isReady();
 
     if (isReady) {
       res.send('OK').end();
@@ -66,9 +66,9 @@ controller.initialize().then((ok) => {
       console.log('Socket thing listening on port 18444...');
     });
 
-    if (env.REPORT_HEALTH) {
-      healthApp.listen(4242, () => {
-        console.log('Health thing listening on port 4242...');
+    if (env.REPORT_METRICS) {
+      metricsApp.listen(4242, () => {
+        console.log('Metrics thing listening on port 4242...');
       });
     }
   });
