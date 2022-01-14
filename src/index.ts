@@ -73,3 +73,7 @@ controller.initialize().then((ok) => {
     }
   });
 });
+
+process.on('SIGTERM', () => {
+  console.log('Graceful termination');
+});
