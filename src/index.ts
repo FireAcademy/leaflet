@@ -5,7 +5,9 @@ import { Client } from './client';
 import { Controller } from './controller';
 import { env } from 'process';
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const controller = new Controller();
+
 controller.initialize().then((ok) => {
   if (!ok) return;
 
@@ -58,6 +60,14 @@ controller.initialize().then((ok) => {
     }
   });
 
+  process.on('SIGTERM', async () => {
+    console.log('Graceful termination');
+    while (clients.length > 0) {
+      await sleep(1000);
+    }
+    process.exit(0);
+  });
+
   console.log('Generating certificate queue; this might take a few mins...');
   certManager.initialize().then(() => {
     console.log('Done.');
@@ -72,8 +82,4 @@ controller.initialize().then((ok) => {
       });
     }
   });
-});
-
-process.on('SIGTERM', () => {
-  console.log('Graceful termination');
 });
