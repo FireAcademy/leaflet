@@ -5,13 +5,12 @@ import { Client } from './client';
 import { Controller } from './controller';
 import { env } from 'process';
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const controller = new Controller();
 
 controller.initialize().then((ok) => {
   if (!ok) return;
 
-  const certManager = new CertManager(100);
+  const certManager = new CertManager(142);
   let clients: Client[] = [];
   const expressApp = express();
   const metricsApp = express();
@@ -37,6 +36,16 @@ controller.initialize().then((ok) => {
     }
   });
 
+  app.get('/:apiKey/ws', async (req, res) => {
+    const origin = await controller.getOrigin(req.params.apiKey ?? '');
+    let filteredOrigin = origin.replace(/\n/g, '').replace(/\r/g, '').replace(/\t/g, '');
+    if (filteredOrigin.length > 64) {
+      filteredOrigin = '*';
+    }
+
+    res.set('Access-Control-Allow-Origin', filteredOrigin).end();
+  });
+
   app.ws('/:apiKey/ws', (ws, req) => {
     const apiKey: string = req.params.apiKey;
 
@@ -58,14 +67,6 @@ controller.initialize().then((ok) => {
       console.log(_);
       ws.close();
     }
-  });
-
-  process.on('SIGTERM', async () => {
-    console.log('Graceful termination');
-    while (clients.length > 0) {
-      await sleep(1000);
-    }
-    process.exit(0);
   });
 
   console.log('Generating certificate queue; this might take a few mins...');

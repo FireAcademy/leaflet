@@ -1,5 +1,5 @@
 import { WebSocket } from 'ws';
-import { ALLOWED_MESSAGE_TYPES, ALLOWED_NODE_TYPE } from './allowed_message_types';
+import { ALLOWED_MESSAGE_TYPES } from './allowed_message_types';
 import { CertAndKey } from './cert_manager';
 import { ProtocolMessageTypes } from './protocol_message_types';
 import { v4 as uuidv4 } from 'uuid';
@@ -40,10 +40,6 @@ export class Client {
 
       const msgType = msg.readUInt8();
       if (!ALLOWED_MESSAGE_TYPES.includes(msgType)) {
-        await sleep(1000);
-        this.clientWs.close();
-      }
-      if (msgType === ProtocolMessageTypes.handshake && !this.handshakeOk(msg)) {
         await sleep(1000);
         this.clientWs.close();
       }
@@ -92,47 +88,5 @@ export class Client {
       this.clientWs.send(msg);
       this.checkSocketsReadyState();
     });
-  }
-
-  private handshakeOk(pckt: Buffer): boolean {
-    let p = pckt;
-    const msgId = pckt.readUInt8();
-    p = pckt.slice(1);
-    if (msgId !== ProtocolMessageTypes.handshake) return false;
-
-    // msg id
-    if (p.length < 2) return false;
-    p = p.slice(2);
-
-    // networkId
-    if (p.length < 4) return false;
-    const s: number = pckt.readUInt32LE();
-    p = p.slice(4);
-    if (p.length < s) return false;
-    p = p.slice(s);
-
-    // protocolVersion
-    if (p.length < 4) return false;
-    const s2: number = pckt.readUInt32LE();
-    p = p.slice(4);
-    if (p.length < s2) return false;
-    p = p.slice(s2);
-
-    // softwareVersion
-    if (p.length < 4) return false;
-    const s3: number = pckt.readUInt32LE();
-    p = p.slice(4);
-    if (p.length < s3) return false;
-    p = p.slice(s3);
-
-    // serverPort
-    if (p.length < 2) return false;
-    p = p.slice(2);
-
-    // nodeType
-    if (p.length < 1) return false;
-    const nodeType = p.readUInt8();
-
-    return nodeType === ALLOWED_NODE_TYPE;
   }
 }

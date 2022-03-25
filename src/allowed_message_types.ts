@@ -1,6 +1,5 @@
 import { ProtocolMessageTypes } from './protocol_message_types';
 
-export const ALLOWED_NODE_TYPE = 6;
 export const ALLOWED_MESSAGE_TYPES = [
   ProtocolMessageTypes.handshake,
 

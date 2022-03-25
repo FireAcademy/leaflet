@@ -22,6 +22,8 @@ export class Controller {
     caCertPath: path.join(homedir(), '.chia/mainnet/config/ssl/ca/private_ca.crt'),
   });
   private gauge: Gauge<'pod'> | undefined;
+  private origins: Record<string, string> = {};
+  private originsLastFetched: Record<string, number> = {};
 
   public async initialize(): Promise<boolean> {
     try {
@@ -55,6 +57,29 @@ export class Controller {
     const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
     const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
     return apiKeyDoc.data()?.valid ?? false;
+  }
+
+  public async getOrigin(apiKey: string): Promise<string> {
+    const timestamp = new Date().getTime();
+    if (
+      this.origins[apiKey] !== undefined &&
+      this.originsLastFetched[apiKey] !== undefined &&
+      timestamp - this.originsLastFetched[apiKey] > 5 * 60 * 1000
+    ) {
+      return this.origins[apiKey];
+    }
+
+    if (this.db === undefined) {
+      return '*';
+    }
+    const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
+    const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
+    const origin: string = apiKeyDoc.data()?.origin ?? '*';
+    const newTimestamp = new Date().getTime();
+
+    this.origins[apiKey] = origin;
+    this.originsLastFetched[apiKey] = newTimestamp;
+    return origin;
   }
 
   public async recordUsage(
