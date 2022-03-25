@@ -96,7 +96,7 @@ export class Controller {
       if (this.firebaseApp !== undefined && this.db !== undefined) {
         const docData = {
           apiKey,
-          uage: newVal,
+          usage: newVal,
           date: firestore.FieldValue.serverTimestamp(),
           billed: false,
         };
