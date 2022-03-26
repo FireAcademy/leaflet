@@ -22,19 +22,6 @@ controller.initialize().then((ok) => {
 
   const app = expressWs(expressApp).app;
 
-  app.use(async (req, res, next) => {
-    if (req.params.apiKey) {
-      const origin = await controller.getOrigin(req.params.apiKey ?? '');
-      let filteredOrigin = origin.replace(/\n/g, '').replace(/\r/g, '').replace(/\t/g, '');
-      if (filteredOrigin.length > 64) {
-        filteredOrigin = '*';
-      }
-
-      res.set('Access-Control-Allow-Origin', filteredOrigin);
-    }
-    next();
-  });
-
   app.get('/', (req, res) => {
     res.send('Leaflet server is running!').end();
   });
@@ -49,8 +36,11 @@ controller.initialize().then((ok) => {
     }
   });
 
-  app.ws('/:apiKey/ws', (ws, req) => {
+  app.ws('/:apiKey/ws', async (ws, req) => {
     const apiKey: string = req.params.apiKey;
+    const origin = await controller.getOrigin(req.params.apiKey ?? '');
+    const baseUrl: string = req.baseUrl;
+    console.log({ origin, baseUrl });
 
     try {
       const client = new Client(

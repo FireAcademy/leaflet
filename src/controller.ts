@@ -59,6 +59,19 @@ export class Controller {
     return apiKeyDoc.data()?.valid ?? false;
   }
 
+  private filterOrigin(o: string): string {
+    let r: string = '';
+    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.*';
+
+    for (let i = 0; i < o.length; i += 1) {
+      if (alphabet.includes(o[i])) {
+        r += o[i];
+      }
+    }
+
+    return r;
+  }
+
   public async getOrigin(apiKey: string): Promise<string> {
     if (this.db === undefined) {
       return '*';
@@ -80,7 +93,7 @@ export class Controller {
 
     this.origins[apiKey] = origin;
     this.originsLastFetched[apiKey] = newTimestamp;
-    return origin;
+    return this.filterOrigin(origin);
   }
 
   public async recordUsage(
@@ -108,10 +121,11 @@ export class Controller {
       return this.isAPIKeyAllowed(apiKey);
     }
 
-    this.usageCache[apiKey] = newVal;
     if (oldVal === 0) {
       return this.isAPIKeyAllowed(apiKey);
     }
+
+    this.usageCache[apiKey] = newVal;
     return true;
   }
 
