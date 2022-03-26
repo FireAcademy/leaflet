@@ -23,13 +23,13 @@ controller.initialize().then((ok) => {
 
   const app = expressWs(expressApp).app;
 
-  app.use(async (req, res, next) => {
+  const wsMiddleware = async (req: any, res: any, next: Function) => {
     if (req.params.apiKey) {
       await controller.ensureOrigin(req.params.apiKey);
     }
 
     next();
-  });
+  };
 
   app.get('/', (req, res) => {
     res.send('Leaflet server is running!').end();
@@ -45,7 +45,7 @@ controller.initialize().then((ok) => {
     }
   });
 
-  app.ws('/:apiKey/ws', (ws, req) => {
+  app.ws('/:apiKey/ws', wsMiddleware, (ws, req) => {
     const apiKey: string = req.params.apiKey;
     const originExp = controller.getOrigin(req.params.apiKey ?? '');
     let realOrigin = (req.headers.origin ?? '');
