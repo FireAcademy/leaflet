@@ -39,8 +39,15 @@ controller.initialize().then((ok) => {
   app.ws('/:apiKey/ws', async (ws, req) => {
     const apiKey: string = req.params.apiKey;
     const origin = await controller.getOrigin(req.params.apiKey ?? '');
-    const originalUrl: string = req.originalUrl;
-    console.log({ origin, originalUrl, req });
+    const realOrigin = req.headers.host ?? '';
+    const r = new RegExp(origin, 'g');
+    const allow: boolean = r.test(realOrigin);
+
+    console.log({origin, realOrigin, allow});
+
+    if (!allow) {
+      ws.close();
+    }
 
     try {
       const client = new Client(

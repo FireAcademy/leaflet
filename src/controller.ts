@@ -61,15 +61,19 @@ export class Controller {
 
   private filterOrigin(o: string): string {
     let r: string = '';
-    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.*';
+    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     for (let i = 0; i < o.length; i += 1) {
       if (alphabet.includes(o[i])) {
         r += o[i];
+      } else if (o[i] === '.') {
+        r += '\.';
+      } else if (o[i] === '*') {
+        r += '[a-zA-Z]*';
       }
     }
 
-    return r;
+    return `^${r}\$`;
   }
 
   public async getOrigin(apiKey: string): Promise<string> {
