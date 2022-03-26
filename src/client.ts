@@ -25,6 +25,7 @@ export class Client {
     apiKey: string,
     onClose: (id: string) => void,
     recordUsage: (apiKey: string, bytes: number) => Promise<boolean>,
+    checkOrigin: () => Promise<boolean>,
   ) {
     this.clientWs = ws;
     this.apiKey = apiKey;
@@ -34,14 +35,19 @@ export class Client {
 
     // setup ASAP
     this.clientWs.on('message', async (msg: Buffer) => {
-      if (!(await this.recordUsage(this.apiKey, msg.length))) {
+      if (
+        !(await this.recordUsage(this.apiKey, msg.length)) ||
+        !(await checkOrigin())
+      ) {
         this.clientWs.close();
+        return;
       }
 
       const msgType = msg.readUInt8();
       if (!ALLOWED_MESSAGE_TYPES.includes(msgType)) {
         await sleep(1000);
         this.clientWs.close();
+        return;
       }
 
       while (this.nodeWs === undefined || this.nodeWs.readyState === WebSocket.CONNECTING) {

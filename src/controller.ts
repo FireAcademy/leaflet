@@ -59,7 +59,7 @@ export class Controller {
     return apiKeyDoc.data()?.valid ?? false;
   }
 
-  private filterOrigin(o: string): string {
+  private buildOriginExp(o: string): string {
     let r: string = '';
     const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -76,44 +76,33 @@ export class Controller {
     return `^${r}\$`;
   }
 
-  public async ensureOrigin(apiKey: string) {
+  public async checkOrigin(apiKey: string, origin: string): Promise<boolean> {
     if (this.db === undefined) {
-      return;
+      return true;
     }
 
     const timestamp = new Date().getTime();
     if (
-      this.origins[apiKey] !== undefined &&
-      this.originsLastFetched[apiKey] !== undefined &&
-      timestamp - this.originsLastFetched[apiKey] < 5 * 60 * 1000
+      this.origins[apiKey] === undefined ||
+      this.originsLastFetched[apiKey] === undefined ||
+      timestamp - this.originsLastFetched[apiKey] > 5 * 60 * 1000
     ) {
-      return;
+      const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
+      const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
+      const origin: string = apiKeyDoc.data()?.origin ?? '*';
+      const newTimestamp = new Date().getTime();
+
+      this.origins[apiKey] = this.buildOriginExp(origin);
+      this.originsLastFetched[apiKey] = newTimestamp;
     }
 
-    const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
-    const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
-    const origin: string = apiKeyDoc.data()?.origin ?? '*';
-    const newTimestamp = new Date().getTime();
+    const originExp = this.origins[apiKey];
+    let reqOrigin = origin.split('://')[origin.split('://').length - 1];
+    reqOrigin = reqOrigin.split(':')[0];
+    const r = new RegExp(originExp, 'g');
+    const allow: boolean = r.test(reqOrigin);
 
-    this.origins[apiKey] = this.filterOrigin(origin);
-    this.originsLastFetched[apiKey] = newTimestamp;
-  }
-
-  public getOrigin(apiKey: string): string {
-    if (this.db === undefined) {
-      return '^.*$';
-    }
-
-    const timestamp = new Date().getTime();
-    if (
-      this.origins[apiKey] !== undefined &&
-      this.originsLastFetched[apiKey] !== undefined &&
-      timestamp - this.originsLastFetched[apiKey] < 5 * 60 * 1000
-    ) {
-      return this.origins[apiKey];
-    }
-
-    return '';
+    return allow;
   }
 
   public async recordUsage(

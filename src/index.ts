@@ -23,14 +23,6 @@ controller.initialize().then((ok) => {
 
   const app = expressWs(expressApp).app;
 
-  const wsMiddleware = async (req: any, res: any, next: Function) => {
-    if (req.params.apiKey) {
-      await controller.ensureOrigin(req.params.apiKey);
-    }
-
-    next();
-  };
-
   app.get('/', (req, res) => {
     res.send('Leaflet server is running!').end();
   });
@@ -45,19 +37,8 @@ controller.initialize().then((ok) => {
     }
   });
 
-  app.ws('/:apiKey/ws', wsMiddleware, (ws, req) => {
+  app.ws('/:apiKey/ws', (ws, req) => {
     const apiKey: string = req.params.apiKey;
-    const originExp = controller.getOrigin(req.params.apiKey ?? '');
-    let realOrigin = (req.headers.origin ?? '');
-    realOrigin = realOrigin.split('://')[realOrigin.split('://').length - 1];
-    realOrigin = realOrigin.split(':')[0];
-    const r = new RegExp(originExp, 'g');
-    const allow: boolean = r.test(realOrigin);
-
-    if (!allow) {
-      ws.close();
-      return;
-    }
 
     try {
       const client = new Client(
@@ -70,6 +51,7 @@ controller.initialize().then((ok) => {
           await controller.recordUsage(apiKey, 0, true);
         },
         (apiKey, bytes) => controller.recordUsage(apiKey, bytes),
+        () => controller.checkOrigin(apiKey, req.headers.origin ?? ''),
        );
       clients.push(client);
       controller.updateConnections(clients.length);
