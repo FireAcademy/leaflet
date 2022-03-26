@@ -36,9 +36,9 @@ controller.initialize().then((ok) => {
     }
   });
 
-  app.ws('/:apiKey/ws', async (ws, req) => {
+  app.ws('/:apiKey/ws', (ws, req) => {
     const apiKey: string = req.params.apiKey;
-    const originExp = await controller.getOrigin(req.params.apiKey ?? '');
+    const originExp = controller.getOrigin(req.params.apiKey ?? '');
     let realOrigin = (req.headers.origin ?? '');
     realOrigin = realOrigin.split('://')[realOrigin.split('://').length - 1];
     realOrigin = realOrigin.split(':')[0];
@@ -47,6 +47,7 @@ controller.initialize().then((ok) => {
 
     if (!allow) {
       ws.close();
+      return;
     }
 
     try {

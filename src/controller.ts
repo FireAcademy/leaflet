@@ -24,6 +24,7 @@ export class Controller {
   private gauge: Gauge<'pod'> | undefined;
   private origins: Record<string, string> = {};
   private originsLastFetched: Record<string, number> = {};
+  private originPromises: Record<string, Promise<void>> = {};
 
   public async initialize(): Promise<boolean> {
     try {
@@ -76,18 +77,9 @@ export class Controller {
     return `^${r}\$`;
   }
 
-  public async getOrigin(apiKey: string): Promise<string> {
+  private async fetchOrigin(apiKey: string) {
     if (this.db === undefined) {
-      return '*';
-    }
-
-    const timestamp = new Date().getTime();
-    if (
-      this.origins[apiKey] !== undefined &&
-      this.originsLastFetched[apiKey] !== undefined &&
-      timestamp - this.originsLastFetched[apiKey] > 5 * 60 * 1000
-    ) {
-      return this.origins[apiKey];
+      return;
     }
 
     const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
@@ -95,9 +87,28 @@ export class Controller {
     const origin: string = apiKeyDoc.data()?.origin ?? '*';
     const newTimestamp = new Date().getTime();
 
-    this.origins[apiKey] = origin;
+    this.origins[apiKey] = this.filterOrigin(origin);
     this.originsLastFetched[apiKey] = newTimestamp;
-    return this.filterOrigin(origin);
+  }
+
+  public getOrigin(apiKey: string): string {
+    if (this.db === undefined) {
+      return '^.*$';
+    }
+
+    const timestamp = new Date().getTime();
+    if (
+      this.origins[apiKey] !== undefined &&
+      this.originsLastFetched[apiKey] !== undefined &&
+      timestamp - this.originsLastFetched[apiKey] < 5 * 60 * 1000
+    ) {
+      return this.origins[apiKey];
+    }
+
+    if (this.originPromises[apiKey] === undefined) {
+      this.originPromises[apiKey] = this.fetchOrigin(apiKey);
+    }
+    return '';
   }
 
   public async recordUsage(
@@ -107,8 +118,10 @@ export class Controller {
   ): Promise<boolean> {
     const oldVal = this.usageCache[apiKey] ?? 0;
     const newVal = oldVal + bytes;
+    this.usageCache[apiKey] = newVal;
 
     if (newVal > LOG_TRESHOLD || force) {
+      this.usageCache[apiKey] = 0;
       if (this.firebaseApp !== undefined && this.db !== undefined) {
         const docData = {
           apiKey,
@@ -119,7 +132,6 @@ export class Controller {
         await this.db.collection('usage').doc().create(docData);
       }
 
-      this.usageCache[apiKey] = 0;
       return this.isAPIKeyAllowed(apiKey);
     }
 
@@ -127,7 +139,6 @@ export class Controller {
       return this.isAPIKeyAllowed(apiKey);
     }
 
-    this.usageCache[apiKey] = newVal;
     return true;
   }
 
