@@ -108,8 +108,6 @@ export class Controller {
     const oldVal = this.usageCache[apiKey] ?? 0;
     const newVal = oldVal + bytes;
 
-    console.log(`Key: ${apiKey}; total usage: ${newVal}`);
-
     if (newVal > LOG_TRESHOLD || force) {
       if (this.firebaseApp !== undefined && this.db !== undefined) {
         const docData = {
