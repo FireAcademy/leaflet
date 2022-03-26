@@ -39,7 +39,9 @@ controller.initialize().then((ok) => {
   app.ws('/:apiKey/ws', async (ws, req) => {
     const apiKey: string = req.params.apiKey;
     const origin = await controller.getOrigin(req.params.apiKey ?? '');
-    const realOrigin = req.headers.origin ?? '';
+    let realOrigin = (req.headers.origin ?? '');
+    realOrigin = realOrigin.split('://')[realOrigin.split('://').length - 1];
+    realOrigin = realOrigin.split(':')[0];
     const r = new RegExp(origin, 'g');
     const allow: boolean = r.test(realOrigin);
 
