@@ -7,7 +7,7 @@ import { homedir, hostname } from 'os';
 import * as path from 'path';
 import { Gauge } from 'prom-client';
 
-const LOG_TRESHOLD = 4200000; // bytes 'cached' until usae is written to db
+const LOG_TRESHOLD = 4200000; // bytes 'cached' until usage is written to db
 
 export class Controller {
   private usageCache: Record<string, number> = {};
@@ -60,6 +60,10 @@ export class Controller {
   }
 
   public async getOrigin(apiKey: string): Promise<string> {
+    if (this.db === undefined) {
+      return '*';
+    }
+
     const timestamp = new Date().getTime();
     if (
       this.origins[apiKey] !== undefined &&
@@ -69,9 +73,6 @@ export class Controller {
       return this.origins[apiKey];
     }
 
-    if (this.db === undefined) {
-      return '*';
-    }
     const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
     const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
     const origin: string = apiKeyDoc.data()?.origin ?? '*';
@@ -108,6 +109,9 @@ export class Controller {
     }
 
     this.usageCache[apiKey] = newVal;
+    if (oldVal === 0) {
+      return this.isAPIKeyAllowed(apiKey);
+    }
     return true;
   }
 
