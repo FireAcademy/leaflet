@@ -4,6 +4,7 @@ import { CertManager } from './cert_manager';
 import { Client } from './client';
 import { Controller } from './controller';
 import { env } from 'process';
+import { app } from 'firebase-admin';
 
 const controller = new Controller();
 
@@ -21,6 +22,14 @@ controller.initialize().then((ok) => {
   }
 
   const app = expressWs(expressApp).app;
+
+  app.use(async (req, res, next) => {
+    if (req.params.apiKey) {
+      await controller.ensureOrigin(req.params.apiKey);
+    }
+
+    next();
+  });
 
   app.get('/', (req, res) => {
     res.send('Leaflet server is running!').end();

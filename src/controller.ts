@@ -24,7 +24,6 @@ export class Controller {
   private gauge: Gauge<'pod'> | undefined;
   private origins: Record<string, string> = {};
   private originsLastFetched: Record<string, number> = {};
-  private originPromises: Record<string, Promise<void>> = {};
 
   public async initialize(): Promise<boolean> {
     try {
@@ -77,8 +76,17 @@ export class Controller {
     return `^${r}\$`;
   }
 
-  private async fetchOrigin(apiKey: string) {
+  public async ensureOrigin(apiKey: string) {
     if (this.db === undefined) {
+      return;
+    }
+
+    const timestamp = new Date().getTime();
+    if (
+      this.origins[apiKey] !== undefined &&
+      this.originsLastFetched[apiKey] !== undefined &&
+      timestamp - this.originsLastFetched[apiKey] < 5 * 60 * 1000
+    ) {
       return;
     }
 
@@ -105,9 +113,6 @@ export class Controller {
       return this.origins[apiKey];
     }
 
-    if (this.originPromises[apiKey] === undefined) {
-      this.originPromises[apiKey] = this.fetchOrigin(apiKey);
-    }
     return '';
   }
 
