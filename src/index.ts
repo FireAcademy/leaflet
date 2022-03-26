@@ -39,8 +39,8 @@ controller.initialize().then((ok) => {
   app.ws('/:apiKey/ws', async (ws, req) => {
     const apiKey: string = req.params.apiKey;
     const origin = await controller.getOrigin(req.params.apiKey ?? '');
-    const baseUrl: string = req.baseUrl;
-    console.log({ origin, baseUrl });
+    const originalUrl: string = req.originalUrl;
+    console.log({ origin, originalUrl, req });
 
     try {
       const client = new Client(
