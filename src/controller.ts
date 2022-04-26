@@ -61,7 +61,7 @@ export class Controller {
 
   private buildOriginExp(o: string): string {
     let r: string = '';
-    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_';
 
     for (let i = 0; i < o.length; i += 1) {
       if (alphabet.includes(o[i])) {
