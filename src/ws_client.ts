@@ -1,8 +1,8 @@
 import { WebSocket } from 'ws';
 import { ALLOWED_MESSAGE_TYPES } from './allowed_message_types';
 import { CertAndKey } from './cert_manager';
-import { ProtocolMessageTypes } from './protocol_message_types';
 import { v4 as uuidv4 } from 'uuid';
+import { env } from 'process';
 /*
 generate a new cert for each client (simulate a new 'peer')
 get data from clientWs -> decode + verify -> pass it to nodeWs
@@ -11,7 +11,7 @@ receive data from nodeWs -> send it to clientWs
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export class Client {
+export class WSClient {
   private readonly clientWs: WebSocket; // user <-> this machine
   private readonly nodeWs: WebSocket; // this process <-> full node 8444
   private readonly apiKey: string;
@@ -57,11 +57,14 @@ export class Client {
       this.checkSocketsReadyState();
     });
 
-    this.nodeWs = new WebSocket('wss://localhost:8444/ws', {
-      rejectUnauthorized: false,
-      cert: certAndKey.certificate,
-      key: certAndKey.key,
-    });
+    this.nodeWs = new WebSocket(
+      env.testnet ? 'wss://localhost:58444/ws' : 'wss://localhost:8444/ws',
+      {
+        rejectUnauthorized: false,
+        cert: certAndKey.certificate,
+        key: certAndKey.key,
+      },
+    );
 
     this.nodeWs.on('open', () => this.setupSocketStuff());
   }

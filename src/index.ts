@@ -1,10 +1,34 @@
-import express from 'express';
+import express, { Application } from 'express';
+import { Application as WebSocketApplication } from 'express-ws';
+// tslint:disable-next-line: no-duplicate-imports
 import expressWs from 'express-ws';
 import { CertManager } from './cert_manager';
-import { Client } from './client';
+import { WSClient } from './ws_client';
 import { Controller } from './controller';
 import { env } from 'process';
-import { app } from 'firebase-admin';
+import { existsSync, readFileSync } from 'fs';
+import https from 'https';
+
+function getApp(expressApp: Application): WebSocketApplication {
+  if (
+    existsSync('/certs') &&
+    existsSync('/certs/privkey.pem') &&
+    existsSync('/certs/cert.pem') &&
+    existsSync('/certs/chain.pem')
+  ) {
+    console.log('Certificates detected in /certs; running server in https mode...');
+    const key = readFileSync('/certs/privkey.pem', 'utf8');
+    const cert = readFileSync('/certs/cert.pem', 'utf8');
+    const ca = readFileSync('/certs/chain.pem', 'utf8');
+
+    const credentials = { key, cert, ca };
+    const httpsServer = https.createServer(credentials, expressApp);
+    return expressWs(expressApp, httpsServer).app;
+  }
+
+  console.log('No certificates found in /certs; running server in http mode');
+  return expressWs(expressApp).app;
+}
 
 const controller = new Controller();
 
@@ -12,7 +36,7 @@ controller.initialize().then((ok) => {
   if (!ok) return;
 
   const certManager = new CertManager(142);
-  let clients: Client[] = [];
+  let clients: WSClient[] = [];
   const expressApp = express();
   const metricsApp = express();
 
@@ -21,7 +45,7 @@ controller.initialize().then((ok) => {
     metricsApp.use(apiMetrics());
   }
 
-  const app = expressWs(expressApp).app;
+  const app = getApp(expressApp);
 
   app.get('/', (req, res) => {
     res.send('Leaflet server is running!').end();
@@ -41,7 +65,7 @@ controller.initialize().then((ok) => {
     const apiKey: string = req.params.apiKey;
 
     try {
-      const client = new Client(
+      const client = new WSClient(
         ws,
         certManager.getCertAndKey(),
         apiKey,
