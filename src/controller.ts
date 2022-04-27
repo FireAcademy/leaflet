@@ -56,7 +56,17 @@ export class Controller {
 
     const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
     const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
-    return apiKeyDoc.data()?.valid ?? false;
+    const valid: boolean = apiKeyDoc.data()?.valid ?? false;
+
+    if (valid) {
+      const apiKeyOrigin = apiKeyDoc.data()?.origin ?? '*';
+      const timestamp = new Date().getTime();
+
+      this.origins[apiKey] = this.buildOriginExp(origin);
+      this.originsLastFetched[apiKey] = timestamp;
+    }
+
+    return valid;
   }
 
   private buildOriginExp(o: string): string {

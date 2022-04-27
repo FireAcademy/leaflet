@@ -8,6 +8,7 @@ import { Controller } from './controller';
 import { env } from 'process';
 import { existsSync, readFileSync } from 'fs';
 import https from 'https';
+import { FullNodeClient } from './full_node_client';
 
 function getApp(expressApp: Application): WebSocketApplication {
   if (
@@ -35,6 +36,7 @@ const controller = new Controller();
 controller.initialize().then((ok) => {
   if (!ok) return;
 
+  FullNodeClient.initialize();
   const certManager = new CertManager(142);
   let clients: WSClient[] = [];
   const expressApp = express();
@@ -83,6 +85,35 @@ controller.initialize().then((ok) => {
       console.log(_);
       ws.close();
     }
+  });
+
+  app.post('/:apiKey/rpc/:method', async (req, res) => {
+    const apiKey: string = req.params.apiKey;
+    const method: string = req.params.method;
+    const reqData: string = JSON.stringify(req.body);
+
+    console.log({in: '.post function', reqData, reqDotData: req.body});
+
+    if (!FullNodeClient.isMethodAllowed(method)) {
+      return;
+    }
+    const apiKeyOk = await controller.isAPIKeyAllowed(apiKey);
+    if (!apiKeyOk) {
+      return;
+    }
+    const originOk = await controller.checkOrigin(apiKey, req.headers.origin ?? '');
+    if (!originOk) {
+      return;
+    }
+
+    const apiResponse = await FullNodeClient.request(method, reqData);
+    await controller.recordUsage(
+      apiKey,
+      420 + reqData.length + JSON.stringify(apiResponse).length,
+      true,
+    );
+
+    res.status(200).json(apiResponse);
   });
 
   console.log('Generating certificate queue; this might take a few mins...');

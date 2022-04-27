@@ -9,7 +9,7 @@ get data from clientWs -> decode + verify -> pass it to nodeWs
 receive data from nodeWs -> send it to clientWs
 */
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export class WSClient {
   private readonly clientWs: WebSocket; // user <-> this machine
