@@ -62,7 +62,7 @@ export class Controller {
       const apiKeyOrigin = apiKeyDoc.data()?.origin ?? '*';
       const timestamp = new Date().getTime();
 
-      this.origins[apiKey] = this.buildOriginExp(origin);
+      this.origins[apiKey] = this.buildOriginExp(apiKeyOrigin);
       this.originsLastFetched[apiKey] = timestamp;
     }
 
@@ -97,6 +97,7 @@ export class Controller {
       this.originsLastFetched[apiKey] === undefined ||
       timestamp - this.originsLastFetched[apiKey] > 5 * 60 * 1000
     ) {
+      console.log({ function: 'checkOrigin', msg: 'origin fetch needed' }); //a
       const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
       const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
       const origin: string = apiKeyDoc.data()?.origin ?? '*';

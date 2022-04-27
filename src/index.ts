@@ -9,6 +9,7 @@ import { env } from 'process';
 import { existsSync, readFileSync } from 'fs';
 import https from 'https';
 import { FullNodeClient } from './full_node_client';
+import { OpenAPIClient } from './openapi_client';
 
 function getApp(expressApp: Application): WebSocketApplication {
   if (
@@ -37,6 +38,7 @@ controller.initialize().then((ok) => {
   if (!ok) return;
 
   FullNodeClient.initialize();
+  OpenAPIClient.initialize();
   const certManager = new CertManager(142);
   let clients: WSClient[] = [];
   const expressApp = express();
@@ -92,7 +94,7 @@ controller.initialize().then((ok) => {
     const method: string = req.params.method;
     const reqData: string = JSON.stringify(req.body);
 
-    console.log({in: '.post function', reqData, reqDotData: req.body});
+    console.log({in: '.post function', reqData, reqDotBody: req.body});
 
     if (!FullNodeClient.isMethodAllowed(method)) {
       return;
@@ -106,7 +108,7 @@ controller.initialize().then((ok) => {
       return;
     }
 
-    const apiResponse = await FullNodeClient.request(method, reqData);
+    const apiResponse = await FullNodeClient.request(method, req.body);
     await controller.recordUsage(
       apiKey,
       420 + reqData.length + JSON.stringify(apiResponse).length,
@@ -114,6 +116,98 @@ controller.initialize().then((ok) => {
     );
 
     res.status(200).json(apiResponse);
+  });
+
+  const checkChainIdAndApiKey = async (chainId: string, apiKey: string, origin: string) => {
+    const apiKeyOk = await controller.isAPIKeyAllowed(apiKey);
+    const originOk = await controller.checkOrigin(apiKey, origin);
+    return OpenAPIClient.chainId !== chainId && apiKeyOk && originOk;
+  };
+
+  app.get('/:apiKey/openapi/v1/utxos', async (req, res) => {
+    const apiKey: string = req.params.apiKey;
+    const address: string = req.query.address?.toString() ?? '';
+    const chainId: string = req.query.chain?.toString() ?? '0x01';
+
+    if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
+      res.status(500).json({ message: 'Denied' });
+      return;
+    }
+
+    const [resp, cost] = await OpenAPIClient.getUTXOs(address);
+    await controller.recordUsage(
+      apiKey,
+      cost,
+      true,
+    );
+
+    res.status(200).json(resp);
+  });
+
+  app.post('/:apiKey/openapi/v1/sendtx', async (req, res) => {
+    const apiKey: string = req.params.apiKey;
+    const item: any = req.body.item;
+    const chainId: string = req.body.chain?.toString() ?? '0x01';
+
+    const additionalCost = JSON.stringify(req.body).length;
+    console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
+
+    if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
+      res.status(500).json({ message: 'Denied' });
+      return;
+    }
+
+    const [resp, cost] = await OpenAPIClient.sendTx(item);
+    await controller.recordUsage(
+      apiKey,
+      cost + additionalCost,
+      true,
+    );
+
+    res.status(200).json(resp);
+  });
+
+  app.post('/:apiKey/openapi/v1/chia_rpc', async (req, res) => {
+    const apiKey: string = req.params.apiKey;
+    const item: string = req.body.item;
+    const chainId: string = req.body.chain?.toString() ?? '0x01';
+
+    const additionalCost = JSON.stringify(req.body).length;
+    console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
+
+    if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
+      res.status(500).json({ message: 'Denied' });
+      return;
+    }
+
+    const [resp, cost] = await OpenAPIClient.chiaRPC(item);
+    await controller.recordUsage(
+      apiKey,
+      cost + additionalCost,
+      true,
+    );
+
+    res.status(200).json(resp);
+  });
+
+  app.get('/:apiKey/openapi/v1/balance', async (req, res) => {
+    const apiKey: string = req.params.apiKey;
+    const address: string = req.query.address?.toString() ?? '';
+    const chainId: string = req.query.chain?.toString() ?? '0x01';
+
+    if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
+      res.status(500).json({ message: 'Denied' });
+      return;
+    }
+
+    const [resp, cost] = await OpenAPIClient.getBalance(address);
+    await controller.recordUsage(
+      apiKey,
+      cost,
+      true,
+    );
+
+    res.status(200).json(resp);
   });
 
   console.log('Generating certificate queue; this might take a few mins...');

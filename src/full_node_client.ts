@@ -52,7 +52,7 @@ export class FullNodeClient {
 
   public static async request(
     route: string,
-    data: string,
+    data: any,
   ): Promise<any> {
     try {
       const resp = await axios.post<string>(`https://localhost:8555/${route}`, data, {

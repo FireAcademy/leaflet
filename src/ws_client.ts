@@ -58,7 +58,7 @@ export class WSClient {
     });
 
     this.nodeWs = new WebSocket(
-      env.testnet ? 'wss://localhost:58444/ws' : 'wss://localhost:8444/ws',
+      env.testnet === 'true' ? 'wss://localhost:58444/ws' : 'wss://localhost:8444/ws',
       {
         rejectUnauthorized: false,
         cert: certAndKey.certificate,
