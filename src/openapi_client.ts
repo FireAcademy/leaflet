@@ -64,6 +64,7 @@ export class OpenAPIClient {
 
     console.log({function: 'getUTXOs', data, addCost:JSON.stringify(data).length });
     cost += JSON.stringify(data).length;
+    console.log({function: 'getUTXOs', data, cost });
     return [data, cost];
   }
 
@@ -92,6 +93,7 @@ export class OpenAPIClient {
 
     console.log({function: 'sendTx', data, addCost:JSON.stringify(data).length });
     cost += JSON.stringify(data).length;
+    console.log({function: 'sendTx', data, cost });
     return [data, cost];
   }
 
@@ -111,6 +113,7 @@ export class OpenAPIClient {
     console.log({function: 'chiaRPC', response, addCost:JSON.stringify(response).length });
     cost += JSON.stringify(response).length * 2;
 
+    console.log({function: 'chiaRPC', response, cost });
     return [response, cost];
   }
 
@@ -149,6 +152,7 @@ export class OpenAPIClient {
     };
     console.log({function: 'balance', data, addCost:JSON.stringify(data).length });
     cost += JSON.stringify(data).length;
+    console.log({function: 'balance', data, cost });
     return [data, cost];
   }
 }
