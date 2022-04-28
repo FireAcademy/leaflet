@@ -97,15 +97,15 @@ controller.initialize().then((ok) => {
     const reqData: string = JSON.stringify(req.body) ?? '';
 
     if (!FullNodeClient.isMethodAllowed(method)) {
-      return res.status(500).json({ message: 'Denied' });
+      return res.status(401).json({ message: 'Denied' });
     }
     const apiKeyOk = await controller.isAPIKeyAllowed(apiKey);
     if (!apiKeyOk) {
-      return res.status(500).json({ message: 'Denied' });
+      return res.status(401).json({ message: 'Denied' });
     }
     const originOk = await controller.checkOrigin(apiKey, req.headers.origin ?? '');
     if (!originOk) {
-      return res.status(500).json({ message: 'Denied' });
+      return res.status(401).json({ message: 'Denied' });
     }
 
     const apiResponse = await FullNodeClient.request(method, req.body ?? {});
@@ -130,7 +130,7 @@ controller.initialize().then((ok) => {
     const chainId: string = req.query.chain?.toString() ?? '0x01';
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      return res.status(500).json({ message: 'Denied' });
+      return res.status(401).json({ message: 'Denied' });
     }
 
     try {
@@ -158,7 +158,7 @@ controller.initialize().then((ok) => {
     console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      return res.status(500).json({ message: 'Denied' });
+      return res.status(401).json({ message: 'Denied' });
     }
 
     try {
@@ -186,7 +186,7 @@ controller.initialize().then((ok) => {
     console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      return res.status(500).json({ message: 'Denied' });
+      return res.status(401).json({ message: 'Denied' });
     }
 
     try {
@@ -211,7 +211,7 @@ controller.initialize().then((ok) => {
     const chainId: string = req.query.chain?.toString() ?? '0x01';
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      return res.status(500).json({ message: 'Denied' });
+      return res.status(401).json({ message: 'Denied' });
     }
 
     try {
