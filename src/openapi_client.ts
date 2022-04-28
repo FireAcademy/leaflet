@@ -92,8 +92,8 @@ export class OpenAPIClient {
   // returns: [json, cost]
   public static async chiaRPC(item: any): Promise<[any, number]> {
     let cost: number = 420;
-    const method = item.spend_bundle;
-    const reqBody = item.params;
+    const method = item.method ?? 'healthz';
+    const reqBody = item.params ?? {};
 
     console.log({function: 'chiaRPC', reqBody, addCost:JSON.stringify(reqBody).length });
     cost += JSON.stringify(reqBody).length;
