@@ -11,6 +11,8 @@ import https from 'https';
 import { FullNodeClient } from './full_node_client';
 import { OpenAPIClient } from './openapi_client';
 
+let thingToListen: any = null;
+
 function getApp(expressApp: Application): WebSocketApplication {
   if (
     existsSync('/certs') &&
@@ -25,11 +27,14 @@ function getApp(expressApp: Application): WebSocketApplication {
 
     const credentials = { key, cert, ca };
     const httpsServer = https.createServer(credentials, expressApp);
+    thingToListen = httpsServer;
     return expressWs(expressApp, httpsServer).app;
   }
 
   console.log('No certificates found in /certs; running server in http mode');
-  return expressWs(expressApp).app;
+  const app = expressWs(expressApp).app;
+  thingToListen = app;
+  return app;
 }
 
 const controller = new Controller();
@@ -151,11 +156,10 @@ controller.initialize().then((ok) => {
 
   app.post('/:apiKey/openapi/v1/sendtx', async (req, res) => {
     const apiKey: string = req.params.apiKey;
-    const item: any = req.body.item ?? {};
-    const chainId: string = req.body.chain?.toString() ?? '0x01';
+    const item: any = req.body ?? {};
+    const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
     const additionalCost = JSON.stringify(req.body ?? '').length;
-    console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), reqParams: JSON.stringify(req.params), reqQuery: JSON.stringify(req.query), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
@@ -172,18 +176,17 @@ controller.initialize().then((ok) => {
 
       res.status(200).json(resp);
     } catch (e: any) {
-      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
       return res.status(500).json({ message: 'Error' });
     }
   });
 
   app.post('/:apiKey/openapi/v1/chia_rpc', async (req, res) => {
     const apiKey: string = req.params.apiKey;
-    const item: string = req.body.item ?? {};
-    const chainId: string = req.body.chain?.toString() ?? '0x01';
+    const item: string = req.body ?? {};
+    const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
     const additionalCost = JSON.stringify(req.body ?? '').length;
-    console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
@@ -200,7 +203,7 @@ controller.initialize().then((ok) => {
 
       res.status(200).json(resp);
     } catch (e: any) {
-      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
       return res.status(500).json({ message: 'Error' });
     }
   });
@@ -225,7 +228,7 @@ controller.initialize().then((ok) => {
 
       res.status(200).json(resp);
     } catch (e: any) {
-      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
       return res.status(500).json({ message: 'Error' });
     }
   });
@@ -234,7 +237,7 @@ controller.initialize().then((ok) => {
   certManager.initialize().then(() => {
     console.log('Done.');
 
-    app.listen(18444, () => {
+    thingToListen.listen(18444, () => {
       console.log('Socket thing listening on port 18444...');
     });
 
