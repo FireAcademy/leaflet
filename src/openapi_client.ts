@@ -91,6 +91,16 @@ export class OpenAPIClient {
     const method = item.method ?? 'healthz';
     const reqBody = item.params ?? {};
 
+    if (!FullNodeClient.isMethodAllowed(method)) {
+      const response = {
+        message: 'Method not allowed',
+      };
+
+      cost += JSON.stringify(response).length;
+
+      return [response, cost];
+    }
+
     cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
