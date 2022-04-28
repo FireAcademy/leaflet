@@ -152,7 +152,7 @@ controller.initialize().then((ok) => {
   app.post('/:apiKey/openapi/v1/sendtx', async (req, res) => {
     const apiKey: string = req.params.apiKey;
     const item: any = req.body.item ?? {};
-    const chainId: string = req.body.chain?.toString() ?? '0x01';
+    const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
     const additionalCost = JSON.stringify(req.body ?? '').length;
     console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), reqParams: JSON.stringify(req.params), reqQuery: JSON.stringify(req.query), additionalCost });
@@ -180,7 +180,7 @@ controller.initialize().then((ok) => {
   app.post('/:apiKey/openapi/v1/chia_rpc', async (req, res) => {
     const apiKey: string = req.params.apiKey;
     const item: string = req.body.item ?? {};
-    const chainId: string = req.body.chain?.toString() ?? '0x01';
+    const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
     const additionalCost = JSON.stringify(req.body ?? '').length;
     console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
