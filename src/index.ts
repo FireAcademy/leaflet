@@ -99,15 +99,15 @@ controller.initialize().then((ok) => {
     console.log({in: '.post function', reqData, reqDotBody: req.body});
 
     if (!FullNodeClient.isMethodAllowed(method)) {
-      return;
+      return res.status(500).json({ message: 'Denied' });
     }
     const apiKeyOk = await controller.isAPIKeyAllowed(apiKey);
     if (!apiKeyOk) {
-      return;
+      return res.status(500).json({ message: 'Denied' });
     }
     const originOk = await controller.checkOrigin(apiKey, req.headers.origin ?? '');
     if (!originOk) {
-      return;
+      return res.status(500).json({ message: 'Denied' });
     }
 
     const apiResponse = await FullNodeClient.request(method, req.body ?? {});
@@ -132,8 +132,7 @@ controller.initialize().then((ok) => {
     const chainId: string = req.query.chain?.toString() ?? '0x01';
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      res.status(500).json({ message: 'Denied' });
-      return;
+      return res.status(500).json({ message: 'Denied' });
     }
 
     try {
@@ -148,6 +147,7 @@ controller.initialize().then((ok) => {
       res.status(200).json(resp);
     } catch (e: any) {
       console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      return res.status(500).json({ message: 'Error' });
     }
   });
 
@@ -160,8 +160,7 @@ controller.initialize().then((ok) => {
     console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      res.status(500).json({ message: 'Denied' });
-      return;
+      return res.status(500).json({ message: 'Denied' });
     }
 
     try {
@@ -176,6 +175,7 @@ controller.initialize().then((ok) => {
       res.status(200).json(resp);
     } catch (e: any) {
       console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      return res.status(500).json({ message: 'Error' });
     }
   });
 
@@ -188,8 +188,7 @@ controller.initialize().then((ok) => {
     console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      res.status(500).json({ message: 'Denied' });
-      return;
+      return res.status(500).json({ message: 'Denied' });
     }
 
     try {
@@ -204,6 +203,7 @@ controller.initialize().then((ok) => {
       res.status(200).json(resp);
     } catch (e: any) {
       console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      return res.status(500).json({ message: 'Error' });
     }
   });
 
@@ -213,8 +213,7 @@ controller.initialize().then((ok) => {
     const chainId: string = req.query.chain?.toString() ?? '0x01';
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      res.status(500).json({ message: 'Denied' });
-      return;
+      return res.status(500).json({ message: 'Denied' });
     }
 
     try {
@@ -229,6 +228,7 @@ controller.initialize().then((ok) => {
       res.status(200).json(resp);
     } catch (e: any) {
       console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      return res.status(500).json({ message: 'Error' });
     }
   });
 
