@@ -155,7 +155,6 @@ controller.initialize().then((ok) => {
     const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
     const additionalCost = JSON.stringify(req.body ?? '').length;
-    console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), reqParams: JSON.stringify(req.params), reqQuery: JSON.stringify(req.query), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
@@ -172,7 +171,7 @@ controller.initialize().then((ok) => {
 
       res.status(200).json(resp);
     } catch (e: any) {
-      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
       return res.status(500).json({ message: 'Error' });
     }
   });
@@ -183,7 +182,6 @@ controller.initialize().then((ok) => {
     const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
     const additionalCost = JSON.stringify(req.body ?? '').length;
-    console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
@@ -200,7 +198,7 @@ controller.initialize().then((ok) => {
 
       res.status(200).json(resp);
     } catch (e: any) {
-      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
       return res.status(500).json({ message: 'Error' });
     }
   });
@@ -225,7 +223,7 @@ controller.initialize().then((ok) => {
 
       res.status(200).json(resp);
     } catch (e: any) {
-      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
       return res.status(500).json({ message: 'Error' });
     }
   });
