@@ -61,12 +61,10 @@ export class FullNodeClient {
       });
 
       const respData: string = resp.data;
-      console.log({respDotData: resp.data, respData, data,
-        respDataJSON: JSON.stringify(resp.data)});
 
       return respData;
     } catch (e: any) {
-      console.log({function: 'request', msg: 'error', e, data, errMsg: e.message});
+      console.log({ e, data, function: 'request', msg: 'error', errMsg: e.message });
       return {};
     }
   }
