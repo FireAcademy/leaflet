@@ -63,7 +63,7 @@ export class FullNodeClient {
 
       return respData;
     } catch (e: any) {
-      console.log(`error! ${e.message}`);
+      console.log({function: 'request', msg: 'error', e, errMsg: e.message});
       return {};
     }
   }
