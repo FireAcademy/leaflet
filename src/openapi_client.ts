@@ -19,15 +19,11 @@ export class OpenAPIClient {
   }
 
   public static coinToJSON(coin: any): any {
-    const result = {
+    return {
       parent_coin_info:  coin['parent_coin_info'],
       puzzle_hash: coin['puzzle_hash'],
       amount: coin['amount'].toString(),
     };
-
-    console.log({function: 'coinToJSON', result});
-
-    return result;
   }
 
   // returns: [json, cost]
@@ -39,17 +35,15 @@ export class OpenAPIClient {
       puzzle_hash: puzzleHash,
       include_spent_coins: false,
     };
-    console.log({function: 'getUTXOs', reqBody, addCost:JSON.stringify(reqBody).length });
     cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
       'get_coin_records_by_puzzle_hash',
       reqBody,
     );
-    console.log({function: 'getUTXOs', response, addCost:JSON.stringify(response).length });
     cost += JSON.stringify(response).length;
 
-    const coinRecords: any[] = response['coin_records'];
+    const coinRecords: any[] = response['coin_records'] ?? [];
     const data: any[] = [];
 
     for (let i = 0; i < coinRecords.length; i += 1) {
@@ -62,9 +56,7 @@ export class OpenAPIClient {
       );
     }
 
-    console.log({function: 'getUTXOs', data, addCost:JSON.stringify(data).length });
     cost += JSON.stringify(data).length;
-    console.log({function: 'getUTXOs', data, cost });
     return [data, cost];
   }
 
@@ -126,17 +118,15 @@ export class OpenAPIClient {
       puzzle_hash: puzzleHash,
       include_spent_coins: false,
     };
-    console.log({function: 'balance', reqBody, addCost:JSON.stringify(reqBody).length });
     cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
       'get_coin_records_by_puzzle_hash',
       reqBody,
     );
-    console.log({function: 'balance', response, addCost:JSON.stringify(response).length });
     cost += JSON.stringify(response).length;
 
-    const coinRecords: any[] = response['coin_records'];
+    const coinRecords: any[] = response['coin_records'] ?? [];
     let balance: number = 0;
 
     for (let i = 0; i < coinRecords.length; i += 1) {
@@ -150,9 +140,7 @@ export class OpenAPIClient {
     const data = {
       amount: balance,
     };
-    console.log({function: 'balance', data, addCost:JSON.stringify(data).length });
     cost += JSON.stringify(data).length;
-    console.log({function: 'balance', data, cost });
     return [data, cost];
   }
 }
