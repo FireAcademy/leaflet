@@ -96,8 +96,6 @@ controller.initialize().then((ok) => {
     const method: string = req.params.method;
     const reqData: string = JSON.stringify(req.body) ?? '';
 
-    console.log({in: '.post function', reqData, reqDotBody: req.body});
-
     if (!FullNodeClient.isMethodAllowed(method)) {
       return res.status(500).json({ message: 'Denied' });
     }
