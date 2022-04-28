@@ -151,10 +151,10 @@ controller.initialize().then((ok) => {
 
   app.post('/:apiKey/openapi/v1/sendtx', async (req, res) => {
     const apiKey: string = req.params.apiKey;
-    const item: any = req.body.item;
+    const item: any = req.body.item ?? {};
     const chainId: string = req.body.chain?.toString() ?? '0x01';
 
-    const additionalCost = JSON.stringify(req.body).length;
+    const additionalCost = JSON.stringify(req.body ?? '').length;
     console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
@@ -179,10 +179,10 @@ controller.initialize().then((ok) => {
 
   app.post('/:apiKey/openapi/v1/chia_rpc', async (req, res) => {
     const apiKey: string = req.params.apiKey;
-    const item: string = req.body.item;
+    const item: string = req.body.item ?? {};
     const chainId: string = req.body.chain?.toString() ?? '0x01';
 
-    const additionalCost = JSON.stringify(req.body).length;
+    const additionalCost = JSON.stringify(req.body ?? '').length;
     console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
