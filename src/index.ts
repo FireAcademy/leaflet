@@ -155,7 +155,7 @@ controller.initialize().then((ok) => {
     const chainId: string = req.body.chain?.toString() ?? '0x01';
 
     const additionalCost = JSON.stringify(req.body ?? '').length;
-    console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), reqParams: JSON.stringify(req.params), additionalCost });
+    console.log({ function: '.post chia_rpc', reqBody: JSON.stringify(req.body), reqParams: JSON.stringify(req.params), reqQuery: JSON.stringify(req.query), additionalCost });
 
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
