@@ -9,6 +9,9 @@ import { Gauge } from 'prom-client';
 
 const LOG_TRESHOLD = 4200000; // bytes 'cached' until usage is written to db
 
+export const FULL_NODE_CRT_PATH = path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.crt');
+export const FULL_NODE_KEY_PATH = path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.key');
+
 export class Controller {
   private usageCache: Record<string, number> = {};
   private firebaseApp: App | undefined;
@@ -17,8 +20,8 @@ export class Controller {
     protocol: 'https',
     hostname: 'localhost',
     port: 8555,
-    certPath: path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.crt'),
-    keyPath: path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.key'),
+    certPath: FULL_NODE_CRT_PATH,
+    keyPath: FULL_NODE_KEY_PATH,
     caCertPath: path.join(homedir(), '.chia/mainnet/config/ssl/ca/private_ca.crt'),
   });
   private gauge: Gauge<'pod'> | undefined;

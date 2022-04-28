@@ -134,14 +134,19 @@ controller.initialize().then((ok) => {
       return;
     }
 
-    const [resp, cost] = await OpenAPIClient.getUTXOs(address);
-    await controller.recordUsage(
-      apiKey,
-      cost,
-      true,
-    );
+    try {
+      const [resp, cost] = await OpenAPIClient.getUTXOs(address);
 
-    res.status(200).json(resp);
+      await controller.recordUsage(
+        apiKey,
+        cost,
+        true,
+      );
+
+      res.status(200).json(resp);
+    } catch (e: any) {
+      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+    }
   });
 
   app.post('/:apiKey/openapi/v1/sendtx', async (req, res) => {
@@ -157,14 +162,19 @@ controller.initialize().then((ok) => {
       return;
     }
 
-    const [resp, cost] = await OpenAPIClient.sendTx(item);
-    await controller.recordUsage(
-      apiKey,
-      cost + additionalCost,
-      true,
-    );
+    try {
+      const [resp, cost] = await OpenAPIClient.sendTx(item);
 
-    res.status(200).json(resp);
+      await controller.recordUsage(
+        apiKey,
+        cost + additionalCost,
+        true,
+      );
+
+      res.status(200).json(resp);
+    } catch (e: any) {
+      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+    }
   });
 
   app.post('/:apiKey/openapi/v1/chia_rpc', async (req, res) => {
@@ -180,14 +190,19 @@ controller.initialize().then((ok) => {
       return;
     }
 
-    const [resp, cost] = await OpenAPIClient.chiaRPC(item);
-    await controller.recordUsage(
-      apiKey,
-      cost + additionalCost,
-      true,
-    );
+    try {
+      const [resp, cost] = await OpenAPIClient.chiaRPC(item);
 
-    res.status(200).json(resp);
+      await controller.recordUsage(
+        apiKey,
+        cost + additionalCost,
+        true,
+      );
+
+      res.status(200).json(resp);
+    } catch (e: any) {
+      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+    }
   });
 
   app.get('/:apiKey/openapi/v1/balance', async (req, res) => {
@@ -200,14 +215,19 @@ controller.initialize().then((ok) => {
       return;
     }
 
-    const [resp, cost] = await OpenAPIClient.getBalance(address);
-    await controller.recordUsage(
-      apiKey,
-      cost,
-      true,
-    );
+    try {
+      const [resp, cost] = await OpenAPIClient.getBalance(address);
 
-    res.status(200).json(resp);
+      await controller.recordUsage(
+        apiKey,
+        cost,
+        true,
+      );
+
+      res.status(200).json(resp);
+    } catch (e: any) {
+      console.log({msg: 'error in OpenAPIClient', e, errorMsg: e.message});
+    }
   });
 
   console.log('Generating certificate queue; this might take a few mins...');

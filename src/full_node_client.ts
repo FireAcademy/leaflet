@@ -5,9 +5,7 @@ https://github.com/freddiecoleman/chia-client
 import { readFileSync } from 'fs';
 import { Agent } from 'https';
 import axios from 'axios';
-
-const CRT_PATH = '/root/.chia/mainnet/config/ssl/full_node/private_full_node.crt';
-const KEY_PATH = '/root/.chia/mainnet/config/ssl/full_node/private_full_node.key';
+import { FULL_NODE_CRT_PATH } from './controller';
 
 export const ALLOWED_METHODS: string[] = [
   'get_blockchain_state',
@@ -40,8 +38,8 @@ export class FullNodeClient {
 
   public static initialize() {
     FullNodeClient.agent = new Agent({
-      cert:  readFileSync(CRT_PATH),
-      key: readFileSync(KEY_PATH),
+      cert:  readFileSync(FULL_NODE_CRT_PATH),
+      key: readFileSync(FULL_NODE_CRT_PATH),
       rejectUnauthorized: false,
     });
   }
