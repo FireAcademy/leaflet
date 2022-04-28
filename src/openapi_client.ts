@@ -68,14 +68,12 @@ export class OpenAPIClient {
     const reqBody = {
       spend_bundle: sbp,
     };
-    console.log({function: 'sendTx', reqBody, addCost:JSON.stringify(reqBody).length });
     cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
       'push_tx',
       reqBody,
     );
-    console.log({function: 'sendTx', response, addCost:JSON.stringify(response).length });
     cost += JSON.stringify(response).length;
 
     const data = {
@@ -83,29 +81,24 @@ export class OpenAPIClient {
       id: 'deprecated', // "will be removed after goby updated"
     };
 
-    console.log({function: 'sendTx', data, addCost:JSON.stringify(data).length });
     cost += JSON.stringify(data).length;
-    console.log({function: 'sendTx', data, cost });
     return [data, cost];
   }
 
   // returns: [json, cost]
   public static async chiaRPC(item: any): Promise<[any, number]> {
     let cost: number = 420;
-    const method = item.spend_bundle;
-    const reqBody = item.params;
+    const method = item.method ?? 'healthz';
+    const reqBody = item.params ?? {};
 
-    console.log({function: 'chiaRPC', reqBody, addCost:JSON.stringify(reqBody).length });
     cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
       method,
       reqBody,
     );
-    console.log({function: 'chiaRPC', response, addCost:JSON.stringify(response).length });
     cost += JSON.stringify(response).length * 2;
 
-    console.log({function: 'chiaRPC', response, cost });
     return [response, cost];
   }
 
