@@ -31,6 +31,8 @@ export const ALLOWED_METHODS: string[] = [
   'get_all_mempool_tx_ids',
   'get_all_mempool_items',
   'get_mempool_item_by_tx_id',
+  'get_routes',
+  'healthz',
 ];
 
 export class FullNodeClient {
