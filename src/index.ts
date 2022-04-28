@@ -92,7 +92,7 @@ controller.initialize().then((ok) => {
   app.post('/:apiKey/rpc/:method', async (req, res) => {
     const apiKey: string = req.params.apiKey;
     const method: string = req.params.method;
-    const reqData: string = JSON.stringify(req.body);
+    const reqData: string = JSON.stringify(req.body) ?? '';
 
     console.log({in: '.post function', reqData, reqDotBody: req.body});
 
@@ -108,7 +108,7 @@ controller.initialize().then((ok) => {
       return;
     }
 
-    const apiResponse = await FullNodeClient.request(method, req.body);
+    const apiResponse = await FullNodeClient.request(method, req.body ?? '');
     await controller.recordUsage(
       apiKey,
       420 + reqData.length + JSON.stringify(apiResponse).length,
