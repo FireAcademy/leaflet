@@ -108,7 +108,7 @@ controller.initialize().then((ok) => {
       return;
     }
 
-    const apiResponse = await FullNodeClient.request(method, req.body ?? '');
+    const apiResponse = await FullNodeClient.request(method, req.body ?? {});
     await controller.recordUsage(
       apiKey,
       420 + reqData.length + JSON.stringify(apiResponse).length,

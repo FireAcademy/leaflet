@@ -55,6 +55,9 @@ export class FullNodeClient {
     try {
       const resp = await axios.post<string>(`https://localhost:8555/${route}`, data, {
         httpsAgent: this.agent,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       const respData: string = resp.data;
@@ -63,7 +66,7 @@ export class FullNodeClient {
 
       return respData;
     } catch (e: any) {
-      console.log({function: 'request', msg: 'error', e, errMsg: e.message});
+      console.log({function: 'request', msg: 'error', e, data, errMsg: e.message});
       return {};
     }
   }
