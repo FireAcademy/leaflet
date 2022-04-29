@@ -24,7 +24,7 @@ export const ALLOWED_METHODS: string[] = [
   'get_coin_records_by_puzzle_hashes',
   'get_coin_record_by_name',
   'get_coin_records_by_names',
-  'get_coin_records_by_parent_ids',
+  // 'get_coin_records_by_parent_ids',
   'get_coin_records_by_hint',
   'push_tx',
   'get_puzzle_and_solution',
