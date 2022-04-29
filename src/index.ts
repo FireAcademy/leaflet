@@ -142,7 +142,6 @@ controller.initialize().then((ok) => {
     try {
       const [resp, cost] = await OpenAPIClient.getUTXOs(address);
 
-      console.log({function: 'utxos', cost});
       await controller.recordUsage(
         apiKey,
         cost,
@@ -169,7 +168,6 @@ controller.initialize().then((ok) => {
     try {
       const [resp, cost] = await OpenAPIClient.sendTx(item);
 
-      console.log({function: 'sendtx', cost});
       await controller.recordUsage(
         apiKey,
         cost + additionalCost,
@@ -196,7 +194,6 @@ controller.initialize().then((ok) => {
     try {
       const [resp, cost] = await OpenAPIClient.chiaRPC(item);
 
-      console.log({function: 'chia_rpc', cost});
       await controller.recordUsage(
         apiKey,
         cost + additionalCost,
@@ -221,7 +218,6 @@ controller.initialize().then((ok) => {
     try {
       const [resp, cost] = await OpenAPIClient.getBalance(address);
 
-      console.log({function: 'balance', cost});
       await controller.recordUsage(
         apiKey,
         cost,
