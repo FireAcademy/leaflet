@@ -179,7 +179,6 @@ export class Controller {
   }
 
   public async prepareForShutdown(): Promise<void> {
-    console.log("prepping for shutdown...");
     let apiKey: string;
     let usage: number;
     const promises = [];
@@ -192,6 +191,5 @@ export class Controller {
     }
 
     await Promise.all(promises);
-    console.log("done");
   }
 }
