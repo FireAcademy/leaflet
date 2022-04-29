@@ -117,9 +117,7 @@ export class Controller {
     }
 
     const originExp = this.origins[apiKey];
-    console.log({originExp, origin});
     if (originExp === `^${STAR_REPLACEMENT}\$`) {
-      console.log({msg: 'optimized origin'});
       return true;
     }
     let reqOrigin = origin.split('://')[origin.split('://').length - 1];
@@ -135,7 +133,6 @@ export class Controller {
     bytes: number,
     force: boolean = false,
   ): Promise<boolean> {
-    console.log({apiKey, bytes, force});
     const oldVal = this.usageCache[apiKey] ?? 0;
     const newVal = oldVal + bytes;
     this.usageCache[apiKey] = newVal;

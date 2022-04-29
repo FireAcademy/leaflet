@@ -114,9 +114,11 @@ controller.initialize().then((ok) => {
     }
 
     const apiResponse = await FullNodeClient.request(method, req.body ?? {});
+    const usage = 420 + reqData.length + JSON.stringify(apiResponse).length;
+    console.log({method, usage});
     await controller.recordUsage(
       apiKey,
-      420 + reqData.length + JSON.stringify(apiResponse).length,
+      usage,
     );
 
     res.status(200).json(apiResponse);
@@ -140,6 +142,7 @@ controller.initialize().then((ok) => {
     try {
       const [resp, cost] = await OpenAPIClient.getUTXOs(address);
 
+      console.log({function: 'utxos', cost});
       await controller.recordUsage(
         apiKey,
         cost,
@@ -166,6 +169,7 @@ controller.initialize().then((ok) => {
     try {
       const [resp, cost] = await OpenAPIClient.sendTx(item);
 
+      console.log({function: 'sendtx', cost});
       await controller.recordUsage(
         apiKey,
         cost + additionalCost,
@@ -192,6 +196,7 @@ controller.initialize().then((ok) => {
     try {
       const [resp, cost] = await OpenAPIClient.chiaRPC(item);
 
+      console.log({function: 'chia_rpc', cost});
       await controller.recordUsage(
         apiKey,
         cost + additionalCost,
@@ -216,6 +221,7 @@ controller.initialize().then((ok) => {
     try {
       const [resp, cost] = await OpenAPIClient.getBalance(address);
 
+      console.log({function: 'balance', cost});
       await controller.recordUsage(
         apiKey,
         cost,
