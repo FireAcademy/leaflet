@@ -125,9 +125,9 @@ controller.initialize().then((ok) => {
   });
 
   const checkChainIdAndApiKey = async (chainId: string, apiKey: string, origin: string) => {
-    const apiKeyOk = await controller.isAPIKeyAllowed(apiKey);
-    const originOk = await controller.checkOrigin(apiKey, origin);
-    return OpenAPIClient.chainId === chainId && apiKeyOk && originOk;
+    return OpenAPIClient.chainId === chainId &&
+      (await controller.isAPIKeyAllowed(apiKey)) &&
+      (await controller.checkOrigin(apiKey, origin));
   };
 
   app.get('/:apiKey/openapi/v1/utxos', async (req, res) => {
