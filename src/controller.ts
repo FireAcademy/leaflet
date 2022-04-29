@@ -15,7 +15,6 @@ export const FULL_NODE_KEY_PATH = path.join(homedir(), '.chia/mainnet/config/ssl
 const STAR_REPLACEMENT = '[a-zA-Z-_]*';
 
 export class Controller {
-  private usageCache: Record<string, number> = {};
   private firebaseApp: App | undefined;
   private db: Firestore | undefined;
   private readonly fullNode = new FullNode({
@@ -27,8 +26,10 @@ export class Controller {
     caCertPath: path.join(homedir(), '.chia/mainnet/config/ssl/ca/private_ca.crt'),
   });
   private gauge: Gauge<'pod'> | undefined;
-  private origins: Record<string, string> = {};
-  private originsLastFetched: Record<string, number> = {};
+
+  private usageCache: Map<string, number> = new Map<string, number>();
+  private origins: Map<string, string> = new Map<string, string>();
+  private originsLastFetched: Map<string, number> = new Map<string, number>();
 
   public async initialize(): Promise<boolean> {
     try {
@@ -56,7 +57,7 @@ export class Controller {
 
   private shouldUpdateOrigin(apiKey: string): boolean {
     const timestamp = new Date().getTime();
-    return timestamp - (this.originsLastFetched[apiKey] ?? 0) > 5 * 60 * 1000;
+    return timestamp - (this.originsLastFetched.get(apiKey) ?? 0) > 5 * 60 * 1000;
   }
 
   public async isAPIKeyAllowed(apiKey: string): Promise<boolean> {
@@ -76,8 +77,8 @@ export class Controller {
       const apiKeyOrigin = apiKeyDoc.data()?.origin ?? '*';
       const timestamp = new Date().getTime();
 
-      this.origins[apiKey] = this.buildOriginExp(apiKeyOrigin);
-      this.originsLastFetched[apiKey] = timestamp;
+      this.origins.set(apiKey, this.buildOriginExp(apiKeyOrigin));
+      this.originsLastFetched.set(apiKey, timestamp);
     }
 
     return valid;
@@ -112,11 +113,11 @@ export class Controller {
       const origin: string = apiKeyDoc.data()?.origin ?? '*';
       const newTimestamp = new Date().getTime();
 
-      this.origins[apiKey] = this.buildOriginExp(origin);
-      this.originsLastFetched[apiKey] = newTimestamp;
+      this.origins.set(apiKey, this.buildOriginExp(origin));
+      this.originsLastFetched.set(apiKey, newTimestamp);
     }
 
-    const originExp = this.origins[apiKey];
+    const originExp = this.origins.get(apiKey) ?? '';
     if (originExp === `^${STAR_REPLACEMENT}\$`) {
       return true;
     }
@@ -128,26 +129,32 @@ export class Controller {
     return allow;
   }
 
+  public async recordUsageInDb(apiKey: string, bytes: number): Promise<void> {
+    if (this.firebaseApp === undefined || this.db === undefined) {
+      return;
+    }
+
+    const docData = {
+      apiKey,
+      usage: bytes,
+      date: firestore.FieldValue.serverTimestamp(),
+      billed: false,
+    };
+    console.log({apiKey, bytes});
+    await this.db.collection('usage').doc().create(docData);
+  }
+
   public async recordUsage(
     apiKey: string,
     bytes: number,
-    force: boolean = false,
   ): Promise<boolean> {
-    const oldVal = this.usageCache[apiKey] ?? 0;
+    const oldVal = this.usageCache.get(apiKey) ?? 0;
     const newVal = oldVal + bytes;
-    this.usageCache[apiKey] = newVal;
+    this.usageCache.set(apiKey, newVal);
 
-    if (newVal > LOG_TRESHOLD || (force && newVal > 0)) {
-      this.usageCache[apiKey] = 0;
-      if (this.firebaseApp !== undefined && this.db !== undefined) {
-        const docData = {
-          apiKey,
-          usage: newVal,
-          date: firestore.FieldValue.serverTimestamp(),
-          billed: false,
-        };
-        await this.db.collection('usage').doc().create(docData);
-      }
+    if (newVal > LOG_TRESHOLD) {
+      this.usageCache.set(apiKey, 0);
+      await this.recordUsageInDb(apiKey, newVal);
 
       return this.isAPIKeyAllowed(apiKey);
     }
@@ -169,5 +176,22 @@ export class Controller {
     return blockchain.success &&
       blockchain.blockchain_state.sync.synced &&
       !blockchain.blockchain_state.sync.sync_mode;
+  }
+
+  public async prepareForShutdown(): Promise<void> {
+    console.log("prepping for shutdown...");
+    let apiKey: string;
+    let usage: number;
+    const promises = [];
+    for ([apiKey, usage] of this.usageCache.entries()) {
+      if (usage < 1) continue;
+
+      promises.push(this.recordUsageInDb(
+        apiKey, usage,
+      ));
+    }
+
+    await Promise.all(promises);
+    console.log("done");
   }
 }

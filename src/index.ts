@@ -13,6 +13,8 @@ import { OpenAPIClient } from './openapi_client';
 
 let thingToListen: any = null;
 
+const RPC_INVOCATION_COST = 8400;
+
 function getApp(expressApp: Application): WebSocketApplication {
   if (
     existsSync('/certs') &&
@@ -83,7 +85,7 @@ controller.initialize().then((ok) => {
         async (id) => {
           clients = clients.filter(e => e.id !== id);
           controller.updateConnections(clients.length);
-          await controller.recordUsage(apiKey, 0, true);
+          await controller.recordUsage(apiKey, 0);
         },
         (apiKey, bytes) => controller.recordUsage(apiKey, bytes),
         () => controller.checkOrigin(apiKey, req.headers.origin ?? ''),
@@ -114,11 +116,9 @@ controller.initialize().then((ok) => {
     }
 
     const apiResponse = await FullNodeClient.request(method, req.body ?? {});
-    const usage = 420 + reqData.length + JSON.stringify(apiResponse).length;
-    console.log({method, usage});
     await controller.recordUsage(
       apiKey,
-      usage,
+      RPC_INVOCATION_COST,
     );
 
     res.status(200).json(apiResponse);
@@ -140,11 +140,11 @@ controller.initialize().then((ok) => {
     }
 
     try {
-      const [resp, cost] = await OpenAPIClient.getUTXOs(address);
+      const resp = await OpenAPIClient.getUTXOs(address);
 
       await controller.recordUsage(
         apiKey,
-        cost,
+        RPC_INVOCATION_COST,
       );
 
       res.status(200).json(resp);
@@ -159,18 +159,16 @@ controller.initialize().then((ok) => {
     const item: any = req.body ?? {};
     const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
-    const additionalCost = JSON.stringify(req.body ?? '').length;
-
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
     }
 
     try {
-      const [resp, cost] = await OpenAPIClient.sendTx(item);
+      const resp = await OpenAPIClient.sendTx(item);
 
       await controller.recordUsage(
         apiKey,
-        cost + additionalCost,
+        RPC_INVOCATION_COST,
       );
 
       res.status(200).json(resp);
@@ -185,18 +183,16 @@ controller.initialize().then((ok) => {
     const item: string = req.body ?? {};
     const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
-    const additionalCost = JSON.stringify(req.body ?? '').length;
-
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
     }
 
     try {
-      const [resp, cost] = await OpenAPIClient.chiaRPC(item);
+      const resp = await OpenAPIClient.chiaRPC(item);
 
       await controller.recordUsage(
         apiKey,
-        cost + additionalCost,
+        RPC_INVOCATION_COST,
       );
 
       res.status(200).json(resp);
@@ -216,11 +212,11 @@ controller.initialize().then((ok) => {
     }
 
     try {
-      const [resp, cost] = await OpenAPIClient.getBalance(address);
+      const resp = await OpenAPIClient.getBalance(address);
 
       await controller.recordUsage(
         apiKey,
-        cost,
+        RPC_INVOCATION_COST,
       );
 
       res.status(200).json(resp);
@@ -230,6 +226,11 @@ controller.initialize().then((ok) => {
     }
   });
 
+  process.on('SIGTERM', async () => {
+    await controller.prepareForShutdown();
+
+    process.exit(0);
+  });
   console.log('Generating certificate queue; this might take a few mins...');
   certManager.initialize().then(() => {
     console.log('Done.');
