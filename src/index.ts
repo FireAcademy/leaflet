@@ -226,12 +226,6 @@ controller.initialize().then((ok) => {
     }
   });
 
-  process.on('SIGTERM', async () => {
-    console.log('SIGTERM received.');
-    await controller.prepareForShutdown();
-
-    process.exit(0);
-  });
   console.log('Generating certificate queue; this might take a few mins...');
   certManager.initialize().then(() => {
     console.log('Done.');
@@ -245,5 +239,12 @@ controller.initialize().then((ok) => {
         console.log('Metrics thing listening on port 4242...');
       });
     }
+
+    process.on('SIGTERM', async () => {
+      console.log('SIGTERM received.');
+      await controller.prepareForShutdown();
+
+      process.exit(0);
+    });
   });
 });
