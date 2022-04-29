@@ -228,7 +228,6 @@ controller.initialize().then((ok) => {
 
   process.on('SIGTERM', async () => {
     console.log('SIGTERM received.');
-    await thingToListen.close();
     await controller.prepareForShutdown();
 
     process.exit(0);
