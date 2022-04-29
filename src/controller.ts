@@ -135,6 +135,7 @@ export class Controller {
     bytes: number,
     force: boolean = false,
   ): Promise<boolean> {
+    console.log({apiKey, bytes, force});
     const oldVal = this.usageCache[apiKey] ?? 0;
     const newVal = oldVal + bytes;
     this.usageCache[apiKey] = newVal;
