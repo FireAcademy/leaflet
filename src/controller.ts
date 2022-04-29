@@ -7,10 +7,12 @@ import { homedir, hostname } from 'os';
 import * as path from 'path';
 import { Gauge } from 'prom-client';
 
-const LOG_TRESHOLD = 4200000; // bytes 'cached' until usage is written to db
+const LOG_TRESHOLD = 420000; // bytes 'cached' until usage is written to db
 
 export const FULL_NODE_CRT_PATH = path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.crt');
 export const FULL_NODE_KEY_PATH = path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.key');
+
+const STAR_REPLACEMENT = '[a-zA-Z-_]*';
 
 export class Controller {
   private usageCache: Record<string, number> = {};
@@ -52,8 +54,17 @@ export class Controller {
     return true;
   }
 
+  private shouldUpdateOrigin(apiKey: string): boolean {
+    const timestamp = new Date().getTime();
+    return timestamp - (this.originsLastFetched[apiKey] ?? 0) > 5 * 60 * 1000;
+  }
+
   public async isAPIKeyAllowed(apiKey: string): Promise<boolean> {
-    if (this.firebaseApp === undefined || this.db === undefined) {
+    if (
+      this.firebaseApp === undefined ||
+      this.db === undefined ||
+      !this.shouldUpdateOrigin(apiKey)
+    ) {
       return true;
     }
 
@@ -82,7 +93,7 @@ export class Controller {
       } else if (o[i] === '.') {
         r += '\.';
       } else if (o[i] === '*') {
-        r += '[a-zA-Z]*';
+        r += STAR_REPLACEMENT;
       }
     }
 
@@ -95,12 +106,7 @@ export class Controller {
     }
 
     const timestamp = new Date().getTime();
-    if (
-      this.origins[apiKey] === undefined ||
-      this.originsLastFetched[apiKey] === undefined ||
-      timestamp - this.originsLastFetched[apiKey] > 5 * 60 * 1000
-    ) {
-      console.log({ function: 'checkOrigin', msg: 'origin fetch needed' }); //a
+    if (this.shouldUpdateOrigin(apiKey)) {
       const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
       const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
       const origin: string = apiKeyDoc.data()?.origin ?? '*';
@@ -111,6 +117,11 @@ export class Controller {
     }
 
     const originExp = this.origins[apiKey];
+    console.log({originExp, origin});
+    if (originExp === `^${STAR_REPLACEMENT}\$`) {
+      console.log({msg: 'optimized origin'});
+      return true;
+    }
     let reqOrigin = origin.split('://')[origin.split('://').length - 1];
     reqOrigin = reqOrigin.split(':')[0];
     const r = new RegExp(originExp, 'g');
@@ -128,7 +139,7 @@ export class Controller {
     const newVal = oldVal + bytes;
     this.usageCache[apiKey] = newVal;
 
-    if (newVal > LOG_TRESHOLD || force) {
+    if (newVal > LOG_TRESHOLD || (force && newVal > 0)) {
       this.usageCache[apiKey] = 0;
       if (this.firebaseApp !== undefined && this.db !== undefined) {
         const docData = {

@@ -117,7 +117,6 @@ controller.initialize().then((ok) => {
     await controller.recordUsage(
       apiKey,
       420 + reqData.length + JSON.stringify(apiResponse).length,
-      true,
     );
 
     res.status(200).json(apiResponse);
@@ -144,7 +143,6 @@ controller.initialize().then((ok) => {
       await controller.recordUsage(
         apiKey,
         cost,
-        true,
       );
 
       res.status(200).json(resp);
@@ -171,7 +169,6 @@ controller.initialize().then((ok) => {
       await controller.recordUsage(
         apiKey,
         cost + additionalCost,
-        true,
       );
 
       res.status(200).json(resp);
@@ -198,7 +195,6 @@ controller.initialize().then((ok) => {
       await controller.recordUsage(
         apiKey,
         cost + additionalCost,
-        true,
       );
 
       res.status(200).json(resp);
@@ -223,7 +219,6 @@ controller.initialize().then((ok) => {
       await controller.recordUsage(
         apiKey,
         cost,
-        true,
       );
 
       res.status(200).json(resp);
