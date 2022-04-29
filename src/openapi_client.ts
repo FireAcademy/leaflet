@@ -26,22 +26,18 @@ export class OpenAPIClient {
     };
   }
 
-  // returns: [json, cost]
-  public static async getUTXOs(address: string): Promise<[any, number]> {
-    let cost: number = 420;
+  public static async getUTXOs(address: string): Promise<any> {
     const puzzleHash = this.decodeAddress(address);
 
     const reqBody = {
       puzzle_hash: puzzleHash,
       include_spent_coins: false,
     };
-    cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
       'get_coin_records_by_puzzle_hash',
       reqBody,
     );
-    cost += JSON.stringify(response).length;
 
     const coinRecords: any[] = response['coin_records'] ?? [];
     const data: any[] = [];
@@ -56,38 +52,30 @@ export class OpenAPIClient {
       );
     }
 
-    cost += JSON.stringify(data).length;
-    return [data, cost];
+    return data;
   }
 
-  // returns: [json, cost]
-  public static async sendTx(item: any): Promise<[any, number]> {
-    let cost: number = 420;
+  public static async sendTx(item: any): Promise<any> {
     const sbp = item.spend_bundle;
 
     const reqBody = {
       spend_bundle: sbp,
     };
-    cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
       'push_tx',
       reqBody,
     );
-    cost += JSON.stringify(response).length;
 
     const data = {
       status: response['status'],
       id: 'deprecated', // "will be removed after goby updated"
     };
 
-    cost += JSON.stringify(data).length;
-    return [data, cost];
+    return data;
   }
 
-  // returns: [json, cost]
-  public static async chiaRPC(item: any): Promise<[any, number]> {
-    let cost: number = 420;
+  public static async chiaRPC(item: any): Promise<any> {
     const method = item.method ?? 'healthz';
     const reqBody = item.params ?? {};
 
@@ -96,38 +84,29 @@ export class OpenAPIClient {
         message: 'Method not allowed',
       };
 
-      cost += JSON.stringify(response).length;
-
-      return [response, cost];
+      return response;
     }
-
-    cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
       method,
       reqBody,
     );
-    cost += JSON.stringify(response).length * 2;
 
-    return [response, cost];
+    return response;
   }
 
-  // returns: [json, cost]
-  public static async getBalance(address: string): Promise<[any, number]> {
-    let cost: number = 420;
+  public static async getBalance(address: string): Promise<any> {
     const puzzleHash = this.decodeAddress(address);
 
     const reqBody = {
       puzzle_hash: puzzleHash,
       include_spent_coins: false,
     };
-    cost += JSON.stringify(reqBody).length;
 
     const response = await FullNodeClient.request(
       'get_coin_records_by_puzzle_hash',
       reqBody,
     );
-    cost += JSON.stringify(response).length;
 
     const coinRecords: any[] = response['coin_records'] ?? [];
     let balance: number = 0;
@@ -143,7 +122,6 @@ export class OpenAPIClient {
     const data = {
       amount: balance,
     };
-    cost += JSON.stringify(data).length;
-    return [data, cost];
+    return data;
   }
 }

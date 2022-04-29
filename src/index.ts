@@ -13,6 +13,8 @@ import { OpenAPIClient } from './openapi_client';
 
 let thingToListen: any = null;
 
+const RPC_INVOCATION_COST = 8400;
+
 function getApp(expressApp: Application): WebSocketApplication {
   if (
     existsSync('/certs') &&
@@ -83,7 +85,7 @@ controller.initialize().then((ok) => {
         async (id) => {
           clients = clients.filter(e => e.id !== id);
           controller.updateConnections(clients.length);
-          await controller.recordUsage(apiKey, 0, true);
+          await controller.recordUsage(apiKey, 0);
         },
         (apiKey, bytes) => controller.recordUsage(apiKey, bytes),
         () => controller.checkOrigin(apiKey, req.headers.origin ?? ''),
@@ -116,17 +118,16 @@ controller.initialize().then((ok) => {
     const apiResponse = await FullNodeClient.request(method, req.body ?? {});
     await controller.recordUsage(
       apiKey,
-      420 + reqData.length + JSON.stringify(apiResponse).length,
-      true,
+      RPC_INVOCATION_COST,
     );
 
     res.status(200).json(apiResponse);
   });
 
   const checkChainIdAndApiKey = async (chainId: string, apiKey: string, origin: string) => {
-    const apiKeyOk = await controller.isAPIKeyAllowed(apiKey);
-    const originOk = await controller.checkOrigin(apiKey, origin);
-    return OpenAPIClient.chainId === chainId && apiKeyOk && originOk;
+    return OpenAPIClient.chainId === chainId &&
+      (await controller.isAPIKeyAllowed(apiKey)) &&
+      (await controller.checkOrigin(apiKey, origin));
   };
 
   app.get('/:apiKey/openapi/v1/utxos', async (req, res) => {
@@ -139,12 +140,11 @@ controller.initialize().then((ok) => {
     }
 
     try {
-      const [resp, cost] = await OpenAPIClient.getUTXOs(address);
+      const resp = await OpenAPIClient.getUTXOs(address);
 
       await controller.recordUsage(
         apiKey,
-        cost,
-        true,
+        RPC_INVOCATION_COST,
       );
 
       res.status(200).json(resp);
@@ -159,19 +159,16 @@ controller.initialize().then((ok) => {
     const item: any = req.body ?? {};
     const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
-    const additionalCost = JSON.stringify(req.body ?? '').length;
-
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
     }
 
     try {
-      const [resp, cost] = await OpenAPIClient.sendTx(item);
+      const resp = await OpenAPIClient.sendTx(item);
 
       await controller.recordUsage(
         apiKey,
-        cost + additionalCost,
-        true,
+        RPC_INVOCATION_COST,
       );
 
       res.status(200).json(resp);
@@ -186,19 +183,16 @@ controller.initialize().then((ok) => {
     const item: string = req.body ?? {};
     const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
 
-    const additionalCost = JSON.stringify(req.body ?? '').length;
-
     if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
       return res.status(401).json({ message: 'Denied' });
     }
 
     try {
-      const [resp, cost] = await OpenAPIClient.chiaRPC(item);
+      const resp = await OpenAPIClient.chiaRPC(item);
 
       await controller.recordUsage(
         apiKey,
-        cost + additionalCost,
-        true,
+        RPC_INVOCATION_COST,
       );
 
       res.status(200).json(resp);
@@ -218,12 +212,11 @@ controller.initialize().then((ok) => {
     }
 
     try {
-      const [resp, cost] = await OpenAPIClient.getBalance(address);
+      const resp = await OpenAPIClient.getBalance(address);
 
       await controller.recordUsage(
         apiKey,
-        cost,
-        true,
+        RPC_INVOCATION_COST,
       );
 
       res.status(200).json(resp);
@@ -246,5 +239,12 @@ controller.initialize().then((ok) => {
         console.log('Metrics thing listening on port 4242...');
       });
     }
+
+    process.on('SIGTERM', async () => {
+      console.log('SIGTERM received.');
+      await controller.prepareForShutdown();
+
+      process.exit(0);
+    });
   });
 });
