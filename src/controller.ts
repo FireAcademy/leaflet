@@ -140,7 +140,7 @@ export class Controller {
       date: firestore.FieldValue.serverTimestamp(),
       billed: false,
     };
-    console.log({apiKey, bytes});
+
     await this.db.collection('usage').doc().create(docData);
   }
 
