@@ -62,7 +62,7 @@ export class Controller {
           const timestamp = new Date().getTime();
           Controller.rpcRequests.push(timestamp);
           let i = 0;
-          while (timestamp - Controller.rpcRequests[i] < 60 * 1000) {
+          while (timestamp - Controller.rpcRequests[i] > 60 * 1000) {
             i += 1;
           }
           if (i > 0) {
@@ -70,6 +70,8 @@ export class Controller {
             Controller.rpcRequests = Controller.rpcRequests.slice(i);
             console.log({arr: Controller.rpcRequests, reqs: Controller.rpcRequests.length, meth: 'collect'});
           }
+
+          this.set(Controller.rpcRequests.length);
         },
       });
     }
