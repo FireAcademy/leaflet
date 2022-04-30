@@ -60,11 +60,11 @@ export class Controller {
         labelNames: ['pod'],
         async collect() {
           const timestamp = new Date().getTime();
-          Controller.rpcRequests.push(timestamp);
           let i = 0;
           while (timestamp - Controller.rpcRequests[i] > 60 * 1000) {
             i += 1;
           }
+
           if (i > 0) {
             console.log({arr: Controller.rpcRequests, reqs: Controller.rpcRequests.length, meth: 'collect'});
             Controller.rpcRequests = Controller.rpcRequests.slice(i);
