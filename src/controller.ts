@@ -61,7 +61,10 @@ export class Controller {
         async collect() {
           const timestamp = new Date().getTime();
           let i = 0;
-          while (timestamp - Controller.rpcRequests[i] > 60 * 1000) {
+          while (
+            i < Controller.rpcRequests.length &&
+            timestamp - Controller.rpcRequests[i] > 60 * 1000
+          ) {
             i += 1;
           }
 
