@@ -69,9 +69,7 @@ export class Controller {
           }
 
           if (i > 0) {
-            console.log({arr: Controller.rpcRequests, reqs: Controller.rpcRequests.length, meth: 'collect'});
             Controller.rpcRequests = Controller.rpcRequests.slice(i);
-            console.log({arr: Controller.rpcRequests, reqs: Controller.rpcRequests.length, meth: 'collect'});
           }
 
           this.set(Controller.rpcRequests.length);
@@ -176,7 +174,6 @@ export class Controller {
   }
 
   public async recordRPCMethodUsage(apiKey: string): Promise<void> {
-    console.log({apiKey, meth: 'recorsRPCMethodUsage'});
     await this.recordUsage(apiKey, RPC_INVOCATION_COST);
 
     const timestamp = new Date().getTime();
