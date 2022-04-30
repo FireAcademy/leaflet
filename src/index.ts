@@ -13,8 +13,6 @@ import { OpenAPIClient } from './openapi_client';
 
 let thingToListen: any = null;
 
-const RPC_INVOCATION_COST = 8400;
-
 function getApp(expressApp: Application): WebSocketApplication {
   if (
     existsSync('/certs') &&
@@ -116,10 +114,7 @@ controller.initialize().then((ok) => {
     }
 
     const apiResponse = await FullNodeClient.request(method, req.body ?? {});
-    await controller.recordUsage(
-      apiKey,
-      RPC_INVOCATION_COST,
-    );
+    await controller.recordRPCMethodUsage(apiKey);
 
     res.status(200).json(apiResponse);
   });
@@ -142,10 +137,7 @@ controller.initialize().then((ok) => {
     try {
       const resp = await OpenAPIClient.getUTXOs(address);
 
-      await controller.recordUsage(
-        apiKey,
-        RPC_INVOCATION_COST,
-      );
+      await controller.recordRPCMethodUsage(apiKey);
 
       res.status(200).json(resp);
     } catch (e: any) {
@@ -166,10 +158,7 @@ controller.initialize().then((ok) => {
     try {
       const resp = await OpenAPIClient.sendTx(item);
 
-      await controller.recordUsage(
-        apiKey,
-        RPC_INVOCATION_COST,
-      );
+      await controller.recordRPCMethodUsage(apiKey);
 
       res.status(200).json(resp);
     } catch (e: any) {
@@ -190,10 +179,7 @@ controller.initialize().then((ok) => {
     try {
       const resp = await OpenAPIClient.chiaRPC(item);
 
-      await controller.recordUsage(
-        apiKey,
-        RPC_INVOCATION_COST,
-      );
+      await controller.recordRPCMethodUsage(apiKey);
 
       res.status(200).json(resp);
     } catch (e: any) {
@@ -214,10 +200,7 @@ controller.initialize().then((ok) => {
     try {
       const resp = await OpenAPIClient.getBalance(address);
 
-      await controller.recordUsage(
-        apiKey,
-        RPC_INVOCATION_COST,
-      );
+      await controller.recordRPCMethodUsage(apiKey);
 
       res.status(200).json(resp);
     } catch (e: any) {

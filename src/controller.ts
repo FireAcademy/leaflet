@@ -13,6 +13,7 @@ export const FULL_NODE_CRT_PATH = path.join(homedir(), '.chia/mainnet/config/ssl
 export const FULL_NODE_KEY_PATH = path.join(homedir(), '.chia/mainnet/config/ssl/full_node/private_full_node.key');
 
 const STAR_REPLACEMENT = '[a-zA-Z-_]*';
+const RPC_INVOCATION_COST = 8400;
 
 export class Controller {
   private firebaseApp: App | undefined;
@@ -25,11 +26,14 @@ export class Controller {
     keyPath: FULL_NODE_KEY_PATH,
     caCertPath: path.join(homedir(), '.chia/mainnet/config/ssl/ca/private_ca.crt'),
   });
-  private gauge: Gauge<'pod'> | undefined;
+  private connectedClientsPerPodGauge: Gauge<'pod'> | undefined;
+  private rpcCallsLastMinutePerPodGauge: Gauge<'pod'> | undefined;
 
   private usageCache: Map<string, number> = new Map<string, number>();
   private origins: Map<string, string> = new Map<string, string>();
   private originsLastFetched: Map<string, number> = new Map<string, number>();
+
+  private static rpcRequests: number[] = [];
 
   public async initialize(): Promise<boolean> {
     try {
@@ -42,13 +46,35 @@ export class Controller {
     }
 
     if (env.REPORT_METRICS) {
-      this.gauge = new Gauge({
+      this.connectedClientsPerPodGauge = new Gauge({
         name: 'custom_metrics_connected_clients_by_pod',
         help: 'Custom metric: Connected Clients per Pod',
         labelNames: ['pod'],
       });
 
-      this.gauge?.set({ pod: hostname() }, 0);
+      this.connectedClientsPerPodGauge?.set({ pod: hostname() }, 0);
+
+      this.rpcCallsLastMinutePerPodGauge = new Gauge({
+        name: 'custom_metrics_rpc_calls_last_minute_by_pod',
+        help: 'Custom metric: RPC Calls (last minute) per Pod',
+        labelNames: ['pod'],
+        async collect() {
+          const timestamp = new Date().getTime();
+          let i = 0;
+          while (
+            i < Controller.rpcRequests.length &&
+            timestamp - Controller.rpcRequests[i] > 60 * 1000
+          ) {
+            i += 1;
+          }
+
+          if (i > 0) {
+            Controller.rpcRequests = Controller.rpcRequests.slice(i);
+          }
+
+          this.set(Controller.rpcRequests.length);
+        },
+      });
     }
 
     console.log('Controller initialized');
@@ -106,12 +132,15 @@ export class Controller {
       return true;
     }
 
-    const timestamp = new Date().getTime();
     if (this.shouldUpdateOrigin(apiKey)) {
       const apiKeyDocRef: DocumentReference = this.db.collection('apiKeys').doc(apiKey);
       const apiKeyDoc: DocumentSnapshot = await apiKeyDocRef.get();
       const origin: string = apiKeyDoc.data()?.origin ?? '*';
       const newTimestamp = new Date().getTime();
+
+      if (apiKeyDoc.data()?.valid === false) {
+        return false;
+      }
 
       this.origins.set(apiKey, this.buildOriginExp(origin));
       this.originsLastFetched.set(apiKey, newTimestamp);
@@ -144,6 +173,13 @@ export class Controller {
     await this.db.collection('usage').doc().create(docData);
   }
 
+  public async recordRPCMethodUsage(apiKey: string): Promise<void> {
+    await this.recordUsage(apiKey, RPC_INVOCATION_COST);
+
+    const timestamp = new Date().getTime();
+    Controller.rpcRequests.push(timestamp);
+  }
+
   public async recordUsage(
     apiKey: string,
     bytes: number,
@@ -167,7 +203,7 @@ export class Controller {
   }
 
   public updateConnections(connectionCount: number) {
-    this.gauge?.set({ pod: hostname() }, connectionCount);
+    this.connectedClientsPerPodGauge?.set({ pod: hostname() }, connectionCount);
   }
 
   public async isReady(): Promise<boolean> {
