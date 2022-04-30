@@ -72,7 +72,7 @@ export class Controller {
             Controller.rpcRequests = Controller.rpcRequests.slice(i);
           }
 
-          this.set(Controller.rpcRequests.length);
+          this.set({ pod: hostname() }, Controller.rpcRequests.length);
         },
       });
     }
