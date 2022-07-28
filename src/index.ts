@@ -9,7 +9,6 @@ import { env } from 'process';
 import { existsSync, readFileSync } from 'fs';
 import https from 'https';
 import { FullNodeClient } from './full_node_client';
-import { OpenAPIClient } from './openapi_client';
 
 let thingToListen: any = null;
 
@@ -43,7 +42,6 @@ controller.initialize().then((ok) => {
   if (!ok) return;
 
   FullNodeClient.initialize();
-  OpenAPIClient.initialize();
   const certManager = new CertManager(142);
   let clients: WSClient[] = [];
   const expressApp = express();
@@ -117,96 +115,6 @@ controller.initialize().then((ok) => {
     await controller.recordRPCMethodUsage(apiKey);
 
     res.status(200).json(apiResponse);
-  });
-
-  const checkChainIdAndApiKey = async (chainId: string, apiKey: string, origin: string) => {
-    return OpenAPIClient.chainId === chainId &&
-      (await controller.isAPIKeyAllowed(apiKey)) &&
-      (await controller.checkOrigin(apiKey, origin));
-  };
-
-  app.get('/:apiKey/openapi/v1/utxos', async (req, res) => {
-    const apiKey: string = req.params.apiKey;
-    const address: string = req.query.address?.toString() ?? '';
-    const chainId: string = req.query.chain?.toString() ?? '0x01';
-
-    if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      return res.status(401).json({ message: 'Denied' });
-    }
-
-    try {
-      const resp = await OpenAPIClient.getUTXOs(address);
-
-      await controller.recordRPCMethodUsage(apiKey);
-
-      res.status(200).json(resp);
-    } catch (e: any) {
-      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
-      return res.status(500).json({ message: 'Error' });
-    }
-  });
-
-  app.post('/:apiKey/openapi/v1/sendtx', async (req, res) => {
-    const apiKey: string = req.params.apiKey;
-    const item: any = req.body ?? {};
-    const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
-
-    if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      return res.status(401).json({ message: 'Denied' });
-    }
-
-    try {
-      const resp = await OpenAPIClient.sendTx(item);
-
-      await controller.recordRPCMethodUsage(apiKey);
-
-      res.status(200).json(resp);
-    } catch (e: any) {
-      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
-      return res.status(500).json({ message: 'Error' });
-    }
-  });
-
-  app.post('/:apiKey/openapi/v1/chia_rpc', async (req, res) => {
-    const apiKey: string = req.params.apiKey;
-    const item: string = req.body ?? {};
-    const chainId: string = req.body.chain?.toString() ?? req.query.chain?.toString() ?? '0x01';
-
-    if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      return res.status(401).json({ message: 'Denied' });
-    }
-
-    try {
-      const resp = await OpenAPIClient.chiaRPC(item);
-
-      await controller.recordRPCMethodUsage(apiKey);
-
-      res.status(200).json(resp);
-    } catch (e: any) {
-      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
-      return res.status(500).json({ message: 'Error' });
-    }
-  });
-
-  app.get('/:apiKey/openapi/v1/balance', async (req, res) => {
-    const apiKey: string = req.params.apiKey;
-    const address: string = req.query.address?.toString() ?? '';
-    const chainId: string = req.query.chain?.toString() ?? '0x01';
-
-    if (!(await checkChainIdAndApiKey(chainId, apiKey, req.headers.origin ?? ''))) {
-      return res.status(401).json({ message: 'Denied' });
-    }
-
-    try {
-      const resp = await OpenAPIClient.getBalance(address);
-
-      await controller.recordRPCMethodUsage(apiKey);
-
-      res.status(200).json(resp);
-    } catch (e: any) {
-      console.log({ e, msg: 'error in OpenAPIClient', errorMsg: e.message });
-      return res.status(500).json({ message: 'Error' });
-    }
   });
 
   console.log('Generating certificate queue; this might take a few mins...');

@@ -72,7 +72,8 @@ export class CertManager {
     let resp = this.queue.shift();
 
     if (resp === undefined) {
-      for (let i = 0; i < 5; i += 1) {
+      console.log('this request is going to take some time...');
+      for (let i = 0; i < 7; i += 1) {
         this.addCertToQueue();
       }
     }
