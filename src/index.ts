@@ -17,7 +17,12 @@ function main() {
   });
 
   app.get('/ready', async (req, res) => {
-    const isReady = await controller.isReady();
+    var isReady;
+    try {
+      isReady = await controller.isReady();
+    } catch (e: any) {
+      isReady = false;
+    }
 
     if (isReady) {
       res.send('OK').end();
