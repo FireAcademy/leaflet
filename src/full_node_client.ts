@@ -15,6 +15,7 @@ export const ALLOWED_METHODS: string[] = [
   'get_block_record_by_height',
   'get_block_record',
   'get_block_records',
+  'get_block_spends',
   'get_unfinished_block_headers',
   'get_network_space',
   'get_additions_and_removals',
@@ -31,6 +32,7 @@ export const ALLOWED_METHODS: string[] = [
   'get_all_mempool_tx_ids',
   'get_all_mempool_items',
   'get_mempool_item_by_tx_id',
+  'get_fee_estimate',
   'get_routes',
   'healthz',
 ];
