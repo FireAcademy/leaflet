@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"time"
+	"bytes"
 	"net/http"
 	"github.com/chia-network/go-chia-libs/pkg/rpc"
 	"github.com/chia-network/go-chia-libs/pkg/rpcinterface"
@@ -10,11 +11,21 @@ import (
 
 var client *rpc.Client
 
-func DoRPCRequest(endpoint string, body interface{}) (*http.Response, error) {
+func DoRPCRequest(method string, endpoint rpcinterface.Endpoint, body string) (*http.Response, error) {
 	req, err := client.NewRequest(
 		rpcinterface.ServiceFullNode,
-		"get_blockchain_state",
+		endpoint,
 		nil,
+	)
+	if err != nil {
+		log.Print(err)
+		return nil, err
+	}
+
+	req.Request, err= http.NewRequest(
+		method,
+		req.Request.URL.String(),
+		bytes.NewReader([]byte(body)),
 	)
 	if err != nil {
 		log.Print(err)
@@ -28,6 +39,21 @@ func DoRPCRequest(endpoint string, body interface{}) (*http.Response, error) {
 	}
 
 	return res, nil
+}
+
+func IsReady() bool {
+	resp, _, err := client.FullNodeService.GetBlockchainState()
+	if err != nil || resp == nil {
+		log.Print(err)
+		return false
+	}
+
+	blockchain_state, ok := resp.BlockchainState.Get()
+	if !ok {
+		return false
+	}
+
+	return blockchain_state.Sync.Synced
 }
 
 func SetupRPCClient() {
