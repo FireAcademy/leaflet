@@ -33,8 +33,22 @@ func ReadinessCheck(c *fiber.Ctx) error {
 
 func ProxyToRPCEndpoint(c *fiber.Ctx) error {
 	endpoint := c.Params("endpoint")
+	
+	body := string(c.Body())
+	if len(body) < 2 {
+		body = "{}"
+	}
 
-	return c.SendString(c.Method() + "." + endpoint)
+	resp, err := DoRPCRequest("POST", endpoint, body)
+	if err != nil {
+		log.Print(err)
+		return c.Status(500).JSON(fiber.Map{
+			"success": false,
+			"message": "error while calling RPC",
+		})
+	}
+
+	return c.Status(resp.StatusCode).SendStream(resp.Body)
 }
 
 func main() {
@@ -44,8 +58,8 @@ func main() {
 
     app.Get("/", Index)
     app.Get("/ready", ReadinessCheck)
-    app.Get("/endpoint/:endpoint", ProxyToRPCEndpoint)
-    app.Post("/endpoint/:endpoint", ProxyToRPCEndpoint)
+    app.Get("/rpc/:endpoint", ProxyToRPCEndpoint)
+    app.Post("/rpc/:endpoint", ProxyToRPCEndpoint)
 
     port := getPort()
     log.Fatalln(app.Listen(fmt.Sprintf(":%v", port)))

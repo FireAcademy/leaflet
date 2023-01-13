@@ -11,10 +11,10 @@ import (
 
 var client *rpc.Client
 
-func DoRPCRequest(method string, endpoint rpcinterface.Endpoint, body string) (*http.Response, error) {
+func DoRPCRequest(method string, endpoint string, body string) (*http.Response, error) {
 	req, err := client.NewRequest(
 		rpcinterface.ServiceFullNode,
-		endpoint,
+		rpcinterface.Endpoint(endpoint),
 		nil,
 	)
 	if err != nil {
@@ -22,7 +22,7 @@ func DoRPCRequest(method string, endpoint rpcinterface.Endpoint, body string) (*
 		return nil, err
 	}
 
-	req.Request, err= http.NewRequest(
+	req.Request, err = http.NewRequest(
 		method,
 		req.Request.URL.String(),
 		bytes.NewReader([]byte(body)),
@@ -30,6 +30,13 @@ func DoRPCRequest(method string, endpoint rpcinterface.Endpoint, body string) (*
 	if err != nil {
 		log.Print(err)
 		return nil, err
+	}
+
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("Accept", "application/json")
+	reqHeaders.Set("Content-Type", "application/json")
+	for k, v := range reqHeaders {
+		req.Request.Header[k] = v
 	}
 
 	res, err := client.Do(req, nil)
@@ -61,7 +68,7 @@ func SetupRPCClient() {
 	client, err = rpc.NewClient(
 		rpc.ConnectionModeHTTP,
 		rpc.WithAutoConfig(),
-		rpc.WithCache(60 * time.Second),
+		rpc.WithCache(5 * time.Second),
 	)
 
 	if err != nil {
