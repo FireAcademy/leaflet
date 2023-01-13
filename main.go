@@ -48,6 +48,7 @@ func ProxyToRPCEndpoint(c *fiber.Ctx) error {
 		})
 	}
 
+	c.Set("Content-Type", "application/json")
 	return c.Status(resp.StatusCode).SendStream(resp.Body)
 }
 
