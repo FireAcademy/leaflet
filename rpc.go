@@ -30,7 +30,7 @@ func DoRPCRequest(endpoint string, body interface{}) (*http.Response, error) {
 	return res, nil
 }
 
-func Setup() {
+func SetupRPCClient() {
 	var err error
 	client, err = rpc.NewClient(
 		rpc.ConnectionModeHTTP,
