@@ -1,3 +1,5 @@
 # Leaflet
 
-todo: new Dockerfile & docker image
+```
+ghcr.io/fireacademy/leaflet:1.2.8
+```
