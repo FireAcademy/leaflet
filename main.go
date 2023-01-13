@@ -9,12 +9,12 @@ import (
 
 
 func getPort() string {
-    port := os.Getenv("LEAFLET_LISTEN_PORT")
-   if port == "" {
-       panic("LEAFLET_LISTEN_PORT not set")
-   }
+	port := os.Getenv("LEAFLET_LISTEN_PORT")
+	if port == "" {
+		panic("LEAFLET_LISTEN_PORT not set")
+	}
 
-   return port
+	return port
 }
 
 func Index(c *fiber.Ctx) error {
@@ -56,11 +56,11 @@ func main() {
 
 	app := fiber.New()
 
-    app.Get("/", Index)
-    app.Get("/ready", ReadinessCheck)
-    app.Get("/rpc/:endpoint", ProxyToRPCEndpoint)
-    app.Post("/rpc/:endpoint", ProxyToRPCEndpoint)
+	app.Get("/", Index)
+	app.Get("/ready", ReadinessCheck)
+	app.Get("/rpc/:endpoint", ProxyToRPCEndpoint)
+	app.Post("/rpc/:endpoint", ProxyToRPCEndpoint)
 
-    port := getPort()
-    log.Fatalln(app.Listen(fmt.Sprintf(":%v", port)))
+	port := getPort()
+	log.Fatalln(app.Listen(fmt.Sprintf(":%v", port)))
 }
