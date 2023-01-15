@@ -17,12 +17,11 @@ ENV PATH="$PATH:/usr/local/go/bin"
 WORKDIR /tmp/leaflet
 
 COPY go.mod go.sum ./
-COPY *.go ./
 
-RUN go version
-RUN go help
 RUN go mod download
 RUN go mod verify
+
+COPY *.go ./
 
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 RUN go build -v -o /leaflet .
