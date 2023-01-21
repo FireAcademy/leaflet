@@ -4,14 +4,25 @@ import (
 	"log"
 	"time"
 	"bytes"
+	"context"
 	"net/http"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/attribute"
 	"github.com/chia-network/go-chia-libs/pkg/rpc"
 	"github.com/chia-network/go-chia-libs/pkg/rpcinterface"
 )
 
 var client *rpc.Client
 
-func DoRPCRequest(method string, endpoint string, body string) (*http.Response, error) {
+func DoRPCRequest(ctx context.Context, method string, endpoint string, body string) (*http.Response, error) {
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(
+		attribute.String("method", method),
+		attribute.String("endpoint", endpoint),
+		attribute.String("body", body),
+	)
+	defer span.End()
+
 	req, err := client.NewRequest(
 		rpcinterface.ServiceFullNode,
 		rpcinterface.Endpoint(endpoint),

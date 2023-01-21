@@ -4,7 +4,9 @@ import (
 	"os"
 	"fmt"
 	"log"
+	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/contrib/otelfiber"
 )
 
 
@@ -39,13 +41,13 @@ func ProxyToRPCEndpoint(c *fiber.Ctx) error {
 		body = "{}"
 	}
 
-	resp, err := DoRPCRequest("POST", endpoint, body)
+	resp, err := DoRPCRequest(c.UserContext(), "POST", endpoint, body)
 	if err != nil {
-		log.Print(err)
-		return c.Status(500).JSON(fiber.Map{
+		c.Status(500).JSON(fiber.Map{
 			"success": false,
 			"message": "error while calling RPC",
 		})
+		return err
 	}
 
 	c.Set("Content-Type", "application/json")
@@ -53,9 +55,13 @@ func ProxyToRPCEndpoint(c *fiber.Ctx) error {
 }
 
 func main() {
+	cleanup := initTracer()
+	defer cleanup(context.Background())
+
 	SetupRPCClient()
 
 	app := fiber.New()
+	app.Use(otelfiber.Middleware())
 
 	app.Get("/", Index)
 	app.Get("/ready", ReadinessCheck)
