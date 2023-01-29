@@ -6,8 +6,6 @@ import (
 	"log"
 	"context"
 	"github.com/gofiber/fiber/v2"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"github.com/gofiber/contrib/otelfiber"
 )
 
@@ -43,12 +41,10 @@ func ProxyToRPCEndpoint(c *fiber.Ctx) error {
 		body = "{}"
 	}
 
-	resp, err := DoRPCRequest(c.UserContext(), "POST", endpoint, body)
+	ctx := c.UserContext()
+	resp, err := DoRPCRequest(ctx, "POST", endpoint, body)
 	if err != nil {
-		span := trace.SpanFromContext(c.UserContext())
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "error while calling RPC")
-
+		LogError(ctx, err, "error while calling RPC")
 		return c.Status(500).JSON(fiber.Map{
 			"success": false,
 			"message": "error while calling RPC",

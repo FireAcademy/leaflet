@@ -5,6 +5,8 @@ import (
     "log"
     "context"
     "go.opentelemetry.io/otel"
+    "go.opentelemetry.io/otel/codes"
+    "go.opentelemetry.io/otel/trace"
     "google.golang.org/grpc/credentials"
     "go.opentelemetry.io/otel/attribute"
     "go.opentelemetry.io/otel/sdk/resource"
@@ -18,6 +20,12 @@ var (
     collectorURL = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
     insecure     = os.Getenv("INSECURE_MODE")
 )
+
+func LogError(c context.Context, err error, message string) {
+    span := trace.SpanFromContext(c)
+    span.RecordError(err)
+    span.SetStatus(codes.Error, message)
+}
 
 // https://signoz.io/blog/monitoring-your-go-application-with-signoz/#instrumenting-a-sample-golang-app
 func initTracer() func(context.Context) error {
