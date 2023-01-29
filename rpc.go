@@ -7,8 +7,8 @@ import (
 	"context"
 	"net/http"
 	"go.opentelemetry.io/otel/trace"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/attribute"
+	telemetry "github.com/fireacademy/telemetry"
 	"github.com/chia-network/go-chia-libs/pkg/rpc"
 	"github.com/chia-network/go-chia-libs/pkg/rpcinterface"
 )
@@ -30,9 +30,7 @@ func DoRPCRequest(ctx context.Context, method string, endpoint string, body stri
 		nil,
 	)
 	if err != nil {
-		log.Print(err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "error while creating new request on client")
+		telemetry.LogError(ctx, err, "error while creating new request")
 
 		return nil, err
 	}
@@ -43,9 +41,7 @@ func DoRPCRequest(ctx context.Context, method string, endpoint string, body stri
 		bytes.NewReader([]byte(body)),
 	)
 	if err != nil {
-		log.Print(err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "error while modifying HTTP request")
+		telemetry.LogError(ctx, err, "error while modifying HTTP request")
 		return nil, err
 	}
 
@@ -58,9 +54,8 @@ func DoRPCRequest(ctx context.Context, method string, endpoint string, body stri
 
 	res, err := client.Do(req, nil)
 	if err != nil {
-		log.Print(err)
-		span.RecordError(err)
-		span.SetStatus(codes.Error, "error while doing RPC request")
+		telemetry.LogError(ctx, err, "error while doing RPC request")
+		
 		return nil, err
 	}
 
