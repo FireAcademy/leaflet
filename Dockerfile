@@ -1,9 +1,8 @@
-FROM ghcr.io/chia-network/chia:1.8.2
+FROM ghcr.io/chia-network/chia:2.1.4
 
 ENV service="node"
 ENV upnp="true"
 ENV healthcheck="false"
-ENV log_level="DEBUG"
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \

@@ -1,5 +1,5 @@
 # Leaflet
 
 ```
-ghcr.io/fireacademy/leaflet:1.3.6
+ghcr.io/fireacademy/leaflet:1.4.0
 ```
